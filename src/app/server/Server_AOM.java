@@ -9,6 +9,8 @@ import org.omg.PortableServer.POA;
 import org.omg.PortableServer.POAHelper;
 import org.omg.PortableServer.ThreadPolicyValue;
 
+import app.orb.RetailStore;
+
 public class Server_AOM {
 
 	public static void main(String[] args) {
@@ -36,9 +38,17 @@ public class Server_AOM {
 
 			// Create myPOA with the right policies
 			POA poa = poaRoot.create_POA("RetailStoreServerImpl_poa",	poaRoot.the_POAManager(), policies);
-
+			
 			// Create the servant
-			RetailStoreServerImpl servant = new RetailStoreServerImpl(args[0]);
+			RetailStoreServer servant = null;
+			int id = Integer.parseInt(args[1]);
+			
+			if (id == 0)
+				// Front End
+				servant = new RetailStoreServerFE(args[0]);
+			else
+				// Server
+				servant = new RetailStoreServerImpl(args[0], id);
 
 			// Activate the servant with the ID on myPOA
 			byte[] objectId = "AnyObjectID".getBytes();
@@ -53,11 +63,15 @@ public class Server_AOM {
 			// ---- Uncomment below to enable Naming Service access. ----
 			org.omg.CORBA.Object ncobj = orb.resolve_initial_references("NameService");
 			NamingContextExt nc = NamingContextExtHelper.narrow(ncobj);
-			nc.rebind(nc.to_name(args[0]), obj);
-
-			System.out.println("Server ready");
-		    System.out.println("Store code: " + args[0]);
-		    System.out.println("Contents of inventory are: " + servant.getInventory());
+			nc.rebind(nc.to_name(args[0] + args[1]), obj);
+			
+			if (Integer.parseInt(args[1]) == 0)
+				System.out.println("Front End for store \"" + args[0] + "\" ready");
+			else {
+				System.out.println("Server ready");
+			    System.out.println("Store code: " + args[0]);
+			    System.out.println("Contents of inventory are: " + ((RetailStoreServerImpl) servant).getInventory());
+			}
 
 			// Wait for incoming requests
 			orb.run();

@@ -24,12 +24,12 @@ public class ObjectUDP {
         private DatagramSocket socket;
 
         public ObjectUDP(int port) {
-                try {
-                        this.socket = new DatagramSocket(port);
-                } catch (SocketException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                }
+	        try {
+                this.socket = new DatagramSocket(port);
+	        } catch (SocketException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+	        }
         }
 
         public void send(String host) throws InterruptedException {

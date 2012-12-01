@@ -13,10 +13,16 @@ import app.orb.RetailStorePackage.InvalidReturn;
 import app.orb.RetailStorePackage.NoSuchItem;
 
 public abstract class RetailStoreServer extends app.orb.RetailStorePOA {
+	public final int MAX_ID = 3;
+	
+	private String storeCode;
+	
 	private org.omg.CORBA.ORB orb = null;
 	private NamingContextExt nc;
 	
-	public RetailStoreServer() {
+	public RetailStoreServer(String storeCode) {
+		this.storeCode = storeCode;
+		
 		// initialize the orb
 		try {
 			initORB(null);
@@ -41,6 +47,10 @@ public abstract class RetailStoreServer extends app.orb.RetailStorePOA {
 	@Override
 	public abstract void exchange(String customerID, int boughtItemID, int boughtNumber,
 			int desiredItemID, int desiredNumber) throws InvalidReturn, NoSuchItem, InsufficientQuantity;
+	
+	public String getStoreCode() {
+		return storeCode;
+	}
 	
 	public NamingContextExt getNamingContext() {
 		return nc;

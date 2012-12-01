@@ -9,80 +9,134 @@ import app.orb.RetailStorePackage.InvalidReturn;
 import app.orb.RetailStorePackage.NoSuchItem;
 import app.server.StockServer;
 import app.server.requests.*;
+import app.server.udpservers.*;
 
 public class RetailStoreServerImpl extends RetailStoreServer {
 	private final int INVENTORY_SIZE = 10;
 	private final int ITEM_ID_OFFSET = 1000;
 	private final int ITEM_MAX_QUANTITY = 40;
 	
-	private final int M_SERVER_PORT = 4445;
-	private final int T_SERVER_PORT = 4446;
-	private final int V_SERVER_PORT = 4447;
-	
-	private final int M_CLIENT_PORT = 4448;
-	private final int T_CLIENT_PORT = 4449;
-	private final int V_CLIENT_PORT = 4450;
-	
-	private String storeCode; 
+	private final int DISPATCH_IN_PORT = 4445;
+	private final int DISPATCH_OUT_PORT = 4446;
+
 	private Hashtable<Integer, Integer> inventory = new Hashtable<Integer, Integer>();
 	private ArrayList<String> proximityList = new ArrayList<String>();
-	private HashMap<String, Integer> portMap = new HashMap<String, Integer>();
-	private Thread stockServer;
-	private int clientPort;
+	private HashMap<Integer, GroupMember> groupMap = new HashMap<Integer, GroupMember>();
+	
+	private class GroupMember {
+		private String host;
+		private boolean isAlive = true;
+		
+		public GroupMember(String host) {
+			this.host = host;
+		}
+		
+		public String getHost() {
+			return host;
+		}
+		
+		public boolean isAlive() {
+			return isAlive;
+		}
+		
+		public void setToAlive() {
+			isAlive = true;
+		}
+		
+		public void setToFailed() {
+			isAlive = false;
+		}
+	}
+	
+	private Thread dispatchServer;
+	
+	private int id;
+	
+	private boolean isLeader = false;
 	
 	/**
 	 * A new instance of RetailStoreServer creates an inventory of INVENTORY_SIZE
 	 * items and randomly generates a quantity between 0 and ITEM_MAX_QUANTITY
 	 * for each item. Item IDs start at ITEM_ID_OFFSET.
 	 */
-	public RetailStoreServerImpl(String storeCode) {
-		this.storeCode = storeCode;
+	public RetailStoreServerImpl(String storeCode, int id) {
+		super(storeCode);
+		this.id = id;
 		
-		// build port mapping
-		portMap.put("M", M_SERVER_PORT);
-		portMap.put("T", T_SERVER_PORT);
-		portMap.put("V", V_SERVER_PORT);
+		// TESTING: assume server with highest rank is leader
+		if (hasHighestRank())
+			isLeader = true;
 		
-		// build proximity list and determine client port
+		// build proximity list
 		switch (storeCode.toCharArray()[0]) {
 			case 'M':
 				proximityList.add("T");
 				proximityList.add("V");
-				clientPort = M_CLIENT_PORT;
 				break;
 			case 'T':
 				proximityList.add("M");
 				proximityList.add("V");
-				clientPort = T_CLIENT_PORT;
 				break;
 			case 'V':
 				proximityList.add("T");
 				proximityList.add("M");
-				clientPort = V_CLIENT_PORT;
 				break;
 		}
 		
-		// initialize stock server on the appropriate port
-		try {
-			stockServer = new Thread(new StockServer(this, portMap.get(storeCode)));
-			stockServer.start();
-		} catch (SocketException e) {
-			System.err.println("Failed to start stock server on port " + portMap.get(storeCode) + "!");
-			System.err.println("Server exception: " + e.toString());
-		    e.printStackTrace();
+		// build group map
+		groupMap.put(1, new GroupMember("nurse"));
+		groupMap.put(2, new GroupMember("noyori"));
+		groupMap.put(3, new GroupMember("north"));
+		
+		// launch dispatch server
+		if (!isLeader) { // only if not the leader
+			dispatchServer = new Thread(new DispatchObjectUDPServer(DISPATCH_IN_PORT, this));
+			dispatchServer.start();
 		}
 		
-		// seed inventory with random stock
-		Random generator = new Random();
-		for (int i = 0; i < INVENTORY_SIZE; i++) {
+		 // seed inventory with random stock
+		 Random generator = new Random();
+		 for (int i = 0; i < INVENTORY_SIZE; i++) {
 			inventory.put(ITEM_ID_OFFSET + i, generator.nextInt(ITEM_MAX_QUANTITY));
-		}
+		 }
 	}
 
 	@Override
 	public void purchaseItem(String customerID, int itemID, int numberOfItem) throws NoSuchItem, InsufficientQuantity {
 		PurchaseItem request = new PurchaseItem(customerID, itemID, numberOfItem);		
 		
+		// FIFO send request over UDP
+	}
+	
+	@Override
+	public void returnItem(String customerID, int itemID, int numberOfItem) throws InvalidReturn {
+		ReturnItem request = new ReturnItem(customerID, itemID, numberOfItem);		
+		
+		// FIFO send request over UDP	
+	}
+	
+	@Override
+	public boolean transferItem(int itemID, int numberOfItem) {
+		TransferItem request = new TransferItem(itemID, numberOfItem);		
+		
+		return false; //TODO: Retrun true value
+		// FIFO send request over UDP	
+	}
+	
+	@Override
+	public String checkStock(int itemID) {
+		
+		CheckStock request = new CheckStock(itemID);
+				
+		return ""; //TODO: Return valid value
+		// FIFO send request over UDP	
+	}
+	
+	@Override
+	public void exchange(String customerID, int boughtItemID, int boughtNumber,
+			int desiredItemID, int desiredNumber) throws InvalidReturn, NoSuchItem, InsufficientQuantity {
+		Exchange request = new Exchange(customerID, boughtItemID, boughtNumber, desiredItemID, desiredNumber);
+				
 		// FIFO send request over UDP
 	}
 	
@@ -105,13 +159,6 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		System.out.println("Customer " + customerID + " purchased " + numberOfItem + " of item " + itemID + ".");
 		printInventory();
 	}
-
-	@Override
-	public void returnItem(String customerID, int itemID, int numberOfItem) throws InvalidReturn {
-		ReturnItem request = new ReturnItem(customerID, itemID, numberOfItem);		
-		
-		// FIFO send request over UDP	
-	}
 	
 	public void localReturnItem(String customerID, int itemID, int numberOfItem) {
 		if (numberOfItem > getTotalPurchased(customerID)) {
@@ -130,31 +177,16 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 			printInventory();
 		}
 	}
-
-	@Override
-	public boolean transferItem(int itemID, int numberOfItem) {
-		TransferItem request = new TransferItem(itemID, numberOfItem);		
-		
-		return false; //TODO: Retrun true value
-		// FIFO send request over UDP	
-	}
 	
 	public synchronized boolean localTransferItem(int itemID, int numberOfItem) {
 		System.out.println("Received transfer attempt for "+ numberOfItem + " of item " + itemID + ".");
-		if (!inventory.containsKey(itemID) || inventory.get(itemID) < numberOfItem) return false;
+		
+		if (!inventory.containsKey(itemID) || inventory.get(itemID) < numberOfItem) { return false; }
+		
 		inventory.put(itemID, Integer.valueOf(inventory.get(itemID).intValue() - numberOfItem));
 		System.out.println("Transfered " + numberOfItem + " of item " + itemID + ".");
 		printInventory();
 		return true;
-	}
-
-	@Override
-	public String checkStock(int itemID) {
-		
-		CheckStock request = new CheckStock(itemID);
-				
-		return ""; //TODO: Return valid value
-		// FIFO send request over UDP	
 	}
 	
 	public String localCheckStock(int itemID) {
@@ -193,14 +225,6 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		return stock.toString();
 	}
 	
-	@Override
-	public void exchange(String customerID, int boughtItemID, int boughtNumber,
-			int desiredItemID, int desiredNumber) throws InvalidReturn, NoSuchItem, InsufficientQuantity {
-		Exchange request = new Exchange(customerID, boughtItemID, boughtNumber, desiredItemID, desiredNumber);
-				
-		// FIFO send request over UDP
-	}
-	
 	public void localExchange(String customerID, int boughtItemID, int boughtNumber,
 			int desiredItemID, int desiredNumber) {
 		if (desiredNumber > getTotalPurchased(customerID)) {
@@ -217,25 +241,9 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 	
 	public void dispatch(Object obj) throws NoSuchItem {		
 		@SuppressWarnings("unchecked")
-		MethodRequest<RetailStoreRemoteMethod> req = MethodRequest.class.cast(obj);
+		MethodRequest<RetailStoreRemoteMethod> req = (MethodRequest<RetailStoreRemoteMethod>) obj;
 		
 		switch ((RetailStoreRemoteMethod) req.getRemoteMethod()) {
-			case CHECK_STOCK:				
-				CheckStock checkStockReq = (CheckStock) req;				
-				localCheckStock(checkStockReq.getItemID());
-				break;
-				
-			case EXCHANGE:
-				Exchange exchangeReq = (Exchange) req;
-				localExchange(
-					exchangeReq.getCustomerID(),
-					exchangeReq.getBoughtItemID(),
-					exchangeReq.getBoughtNumber(),
-					exchangeReq.getDesiredItemID(),
-					exchangeReq.getDesiredNumber()
-				);
-				break;
-				
 			case PURCHASE_ITEM:
 				PurchaseItem purchaseItemReq = (PurchaseItem) req;
 				localPurchaseItem(
@@ -262,14 +270,30 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 				);
 				break;
 				
+			case CHECK_STOCK:				
+				CheckStock checkStockReq = (CheckStock) req;				
+				localCheckStock(checkStockReq.getItemID());
+				break;
+				
+			case EXCHANGE:
+				Exchange exchangeReq = (Exchange) req;
+				localExchange(
+					exchangeReq.getCustomerID(),
+					exchangeReq.getBoughtItemID(),
+					exchangeReq.getBoughtNumber(),
+					exchangeReq.getDesiredItemID(),
+					exchangeReq.getDesiredNumber()
+				);
+				break;
+								
 			default:
 				break;
 		}	
 	
 	}
 	
-	public String getStoreCode() {
-		return storeCode;
+		public String getStoreCode() {
+		return getStoreCode();
 	}
 	
 	public String getInventory() {
@@ -285,7 +309,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 	}
 	
 	private synchronized void recordTransaction(String customerID, int itemID, int numberOfItem) throws FileNotFoundException {
-		PrintWriter outputStream = new PrintWriter(new FileOutputStream(storeCode + "\\" + customerID + ".txt", true));
+		PrintWriter outputStream = new PrintWriter(new FileOutputStream(getStoreCode() + "\\" + customerID + ".txt", true));
 		outputStream.println(customerID + "," + itemID + "," + numberOfItem);
 		outputStream.close();
 	}
@@ -295,7 +319,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		
 		try
 		{
-			inputStream = new Scanner(new FileInputStream(storeCode + "\\" + customerID + ".txt"));
+			inputStream = new Scanner(new FileInputStream(getStoreCode() + "\\" + customerID + ".txt"));
 		} catch (FileNotFoundException e) {
 			
 		}
@@ -323,5 +347,15 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 			}
 		}
 		if (!success) throw new InsufficientQuantity();
+	}
+	
+	private boolean hasHighestRank() {
+		return id == MAX_ID;
+	}
+	
+	private void broadcast(BasicRequest req) {
+		for (GroupMember member : groupMap.values()) {
+			if (member.+isAlive()) { send(member.getHost(), req); }
+		}
 	}
 }

@@ -76,7 +76,7 @@ public class RetailStoreClientImpl implements Runnable {
 		props.setProperty("org.omg.CORBA.ORBClass", "com.sun.corba.se.internal.POA.POAORB");
 		props.setProperty("org.omg.CORBA.ORBSingletonClass", "com.sun.corba.se.internal.corba.ORBSingleton");
 		props.setProperty("org.omg.CORBA.ORBInitialPort", "1050");
-        props.setProperty("org.omg.CORBA.ORBInitialHost", "Misha-PC");
+        props.setProperty("org.omg.CORBA.ORBInitialHost", "asparagus");
 
 		// Initialize the ORB
 		orb = org.omg.CORBA.ORB.init((String[])args, props);

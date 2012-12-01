@@ -1,6 +1,6 @@
 package packet;
 
-public abstract class MethodRequest<T extends Enum<T>> {
+public abstract class MethodRequest<T extends Enum<T>> extends BasicRequest {
 	private T remoteMethod;
 		
 	public MethodRequest(T remoteMethod) {
