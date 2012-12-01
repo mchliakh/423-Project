@@ -3,13 +3,12 @@ package app.server;
 import java.util.*;
 import java.io.*;
 import java.net.*;
-
 import packet.MethodRequest;
-
 import app.orb.RetailStorePackage.InsufficientQuantity;
 import app.orb.RetailStorePackage.InvalidReturn;
 import app.orb.RetailStorePackage.NoSuchItem;
 import app.server.StockServer;
+import app.server.requests.*;
 
 public class RetailStoreServerImpl extends RetailStoreServer {
 	private final int INVENTORY_SIZE = 10;
@@ -82,10 +81,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 
 	@Override
 	public void purchaseItem(String customerID, int itemID, int numberOfItem) throws NoSuchItem, InsufficientQuantity {
-		MethodRequest<RetailStoreRemoteMethod> request = new MethodRequest<RetailStoreRemoteMethod>(RetailStoreRemoteMethod.PURCHASE_ITEM);
-		request.addString(customerID);
-		request.addInt(itemID);
-		request.addInt(numberOfItem);
+		PurchaseItem request = new PurchaseItem(customerID, itemID, numberOfItem);		
 		
 		// FIFO send request over UDP
 	}
@@ -112,10 +108,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 
 	@Override
 	public void returnItem(String customerID, int itemID, int numberOfItem) throws InvalidReturn {
-		MethodRequest<RetailStoreRemoteMethod> request = new MethodRequest<RetailStoreRemoteMethod>(RetailStoreRemoteMethod.RETURN_ITEM);
-		request.addString(customerID);
-		request.addInt(itemID);
-		request.addInt(numberOfItem);
+		ReturnItem request = new ReturnItem(customerID, itemID, numberOfItem);		
 		
 		// FIFO send request over UDP	
 	}
@@ -140,9 +133,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 
 	@Override
 	public boolean transferItem(int itemID, int numberOfItem) {
-		MethodRequest<RetailStoreRemoteMethod> request = new MethodRequest<RetailStoreRemoteMethod>(RetailStoreRemoteMethod.TRANSFER_ITEM);
-		request.addInt(itemID);
-		request.addInt(numberOfItem);
+		TransferItem request = new TransferItem(itemID, numberOfItem);		
 		
 		return false; //TODO: Retrun true value
 		// FIFO send request over UDP	
@@ -159,9 +150,9 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 
 	@Override
 	public String checkStock(int itemID) {
-		MethodRequest<RetailStoreRemoteMethod> request = new MethodRequest<RetailStoreRemoteMethod>(RetailStoreRemoteMethod.CHECK_STOCK);
-		request.addInt(itemID);
 		
+		CheckStock request = new CheckStock(itemID);
+				
 		return ""; //TODO: Return valid value
 		// FIFO send request over UDP	
 	}
@@ -205,13 +196,8 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 	@Override
 	public void exchange(String customerID, int boughtItemID, int boughtNumber,
 			int desiredItemID, int desiredNumber) throws InvalidReturn, NoSuchItem, InsufficientQuantity {
-		MethodRequest<RetailStoreRemoteMethod> request = new MethodRequest<RetailStoreRemoteMethod>(RetailStoreRemoteMethod.PURCHASE_ITEM);
-		request.addString(customerID);
-		request.addInt(boughtItemID);
-		request.addInt(boughtNumber);
-		request.addInt(desiredItemID);
-		request.addInt(desiredNumber);
-		
+		Exchange request = new Exchange(customerID, boughtItemID, boughtNumber, desiredItemID, desiredNumber);
+				
 		// FIFO send request over UDP
 	}
 	
@@ -227,6 +213,59 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		System.out.println("Customer " + customerID + " exchanged " + boughtNumber + " of item " + boughtItemID + " for " +
 				desiredNumber + " of item " + desiredItemID + ".");
 		printInventory();
+	}
+	
+	public void dispatch(Object obj) throws NoSuchItem {		
+		@SuppressWarnings("unchecked")
+		MethodRequest<RetailStoreRemoteMethod> req = MethodRequest.class.cast(obj);
+		
+		switch ((RetailStoreRemoteMethod) req.getRemoteMethod()) {
+			case CHECK_STOCK:				
+				CheckStock checkStockReq = (CheckStock) req;				
+				localCheckStock(checkStockReq.getItemID());
+				break;
+				
+			case EXCHANGE:
+				Exchange exchangeReq = (Exchange) req;
+				localExchange(
+					exchangeReq.getCustomerID(),
+					exchangeReq.getBoughtItemID(),
+					exchangeReq.getBoughtNumber(),
+					exchangeReq.getDesiredItemID(),
+					exchangeReq.getDesiredNumber()
+				);
+				break;
+				
+			case PURCHASE_ITEM:
+				PurchaseItem purchaseItemReq = (PurchaseItem) req;
+				localPurchaseItem(
+					purchaseItemReq.getCustomerID(),
+					purchaseItemReq.getItemID(),
+					purchaseItemReq.getNumberOfItem()
+				);
+				break;
+				
+			case RETURN_ITEM:
+				ReturnItem returnItemReq = (ReturnItem) req;
+				localReturnItem(
+					returnItemReq.getCustomerID(),
+					returnItemReq.getItemID(),
+					returnItemReq.getNumberOfItem()
+				);
+				break;
+				
+			case TRANSFER_ITEM:
+				TransferItem transferItemReq = (TransferItem) req;
+				localTransferItem(
+					transferItemReq.getItemID(),
+					transferItemReq.getNumberOfItem()
+				);
+				break;
+				
+			default:
+				break;
+		}	
+	
 	}
 	
 	public String getStoreCode() {
@@ -272,13 +311,6 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		return total;
 	}
 		
-	class ATTEMPTTRANSFER {
-		int itemID, int numberOfItem;
-		methodname = "attemptTransfer"
-		
-	}
-	
-	attemptTransfer ATTEMPTTRANSFER.itemID, ATTEMPTTRANSFER.num
 	private void attemptTransfer(int itemID, int numberOfItem) throws InsufficientQuantity {
 		boolean success = false;
 		for (String storeCode : proximityList) {

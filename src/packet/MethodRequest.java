@@ -6,4 +6,8 @@ public abstract class MethodRequest<T extends Enum<T>> {
 	public MethodRequest(T remoteMethod) {
 		this.remoteMethod = remoteMethod;
 	}	
+	
+	public T getRemoteMethod() {
+		return remoteMethod;
+	}
 }

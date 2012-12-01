@@ -17,7 +17,7 @@ public class Server_AOM {
 		props.setProperty("org.omg.CORBA.ORBClass", "com.sun.corba.se.internal.POA.POAORB");
 		props.setProperty("org.omg.CORBA.ORBSingletonClass", "com.sun.corba.se.internal.corba.ORBSingleton");
 		props.setProperty("org.omg.CORBA.ORBInitialPort", "1050");
-        props.setProperty("org.omg.CORBA.ORBInitialHost", "Misha-PC");
+        props.setProperty("org.omg.CORBA.ORBInitialHost", "localhost");
 
 		try {
 			// Initialize the ORB.
