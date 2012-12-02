@@ -2,17 +2,17 @@ package app.server.udpservers;
 
 import app.orb.RetailStorePackage.NoSuchItem;
 import app.server.RetailStoreServerImpl;
-import udp.ObjectUDPServer;
+import udp.FIFOObjectUDPServlet;
 
-public class DispatchObjectUDPServer extends ObjectUDPServer<RetailStoreServerImpl> {
+public class DispatchServlet extends FIFOObjectUDPServlet<RetailStoreServerImpl> {
 
-	public DispatchObjectUDPServer(int port, RetailStoreServerImpl owner) {
+	public DispatchServlet(int port, RetailStoreServerImpl owner) {
 		super(port, owner);
 	}
 	
 	public void run() {
 		while (true) {
-			Object obj = receive();
+			Object obj = FIFOReceive();
 			try {
 				getOwner().dispatch(obj);
 			} catch (NoSuchItem e) {

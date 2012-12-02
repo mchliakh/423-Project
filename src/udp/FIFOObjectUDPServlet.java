@@ -1,9 +1,9 @@
 package udp;
 
-public abstract class ObjectUDPServer<T> extends ObjectUDP implements Runnable {
+public abstract class FIFOObjectUDPServlet<T> extends FIFOObjectUDP implements Runnable {
 	private T owner;
 	
-	public ObjectUDPServer(int port, T owner) {
+	public FIFOObjectUDPServlet(int port, T owner) {
 		super(port);
 		this.owner = owner;
 	}

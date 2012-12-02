@@ -3,12 +3,15 @@ package app.server;
 import java.util.*;
 import java.io.*;
 import java.net.*;
-import packet.MethodRequest;
+
+import packet.BasicPacket;
+import packet.StatusPacket;
+import udp.FIFOObjectUDP;
 import app.orb.RetailStorePackage.InsufficientQuantity;
 import app.orb.RetailStorePackage.InvalidReturn;
 import app.orb.RetailStorePackage.NoSuchItem;
 import app.server.StockServer;
-import app.server.requests.*;
+import app.server.request.*;
 import app.server.udpservers.*;
 
 public class RetailStoreServerImpl extends RetailStoreServer {
@@ -23,6 +26,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 	private ArrayList<String> proximityList = new ArrayList<String>();
 	private HashMap<Integer, GroupMember> groupMap = new HashMap<Integer, GroupMember>();
 	
+	private FIFOObjectUDP sender = new FIFOObjectUDP(DISPATCH_OUT_PORT);
 	public class GroupMember {
 		private String host;
 		private boolean isAlive = true;
@@ -95,7 +99,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		
 		// launch dispatch server
 		if (!isLeader) { // only if not the leader
-			dispatchServer = new Thread(new DispatchObjectUDPServer(DISPATCH_IN_PORT, this));
+			dispatchServer = new Thread(new DispatchServlet(DISPATCH_IN_PORT, this));
 			dispatchServer.start();
 		}
 		
@@ -108,21 +112,19 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 
 	@Override
 	public void purchaseItem(String customerID, int itemID, int numberOfItem) throws NoSuchItem, InsufficientQuantity {
-		PurchaseItem request = new PurchaseItem(customerID, itemID, numberOfItem);		
-		
-		// FIFO send request over UDP
+		PurchaseItem req = new PurchaseItem(customerID, itemID, numberOfItem);
+		broadcast(req);
 	}
 	
 	@Override
 	public void returnItem(String customerID, int itemID, int numberOfItem) throws InvalidReturn {
-		ReturnItem request = new ReturnItem(customerID, itemID, numberOfItem);		
-		
-		// FIFO send request over UDP	
+		ReturnItem req = new ReturnItem(customerID, itemID, numberOfItem);		
+		broadcast(req);	
 	}
 	
 	@Override
 	public boolean transferItem(int itemID, int numberOfItem) {
-		TransferItem request = new TransferItem(itemID, numberOfItem);		
+		TransferItem req = new TransferItem(itemID, numberOfItem);		
 		
 		return false; //TODO: Retrun true value
 		// FIFO send request over UDP	
@@ -194,41 +196,41 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		return true;
 	}
 	
-	public String localCheckStock(int itemID) {
-		Hashtable<String, String> stock = new Hashtable<String, String>();
-		String[] received;
-		for (String storeCode : proximityList) {
-			try {
-				synchronized (this) {
-					// get a datagram socket
-			        DatagramSocket socket = new DatagramSocket(clientPort);
-			 
-			        // send request
-			        byte[] buf = new byte[256];
-			        buf = (itemID + "").getBytes();
-			        InetAddress address = InetAddress.getByName("localhost");
-			        DatagramPacket packet = new DatagramPacket(buf, buf.length, address, portMap.get(storeCode));
-			        socket.send(packet);
-			     
-			        // get response
-			        packet = new DatagramPacket(buf, buf.length);
-			        socket.receive(packet);
-			 
-			        // extract stock
-			        received = (new String(packet.getData(), 0, packet.getLength())).split(",");
-			        stock.put(received[0], received[1]);
-			     
-			        socket.close();
-				}
-			} catch (Exception e) {
-				System.err.println("Tried port " + clientPort);
-				System.err.println("Server exception: " + e.toString());
-			    e.printStackTrace();
-			}
-		}
-		// wrap stock hash in MyHashtable to satisfy the IDL 
-		return stock.toString();
-	}
+//	public String localCheckStock(int itemID) {
+//		Hashtable<String, String> stock = new Hashtable<String, String>();
+//		String[] received;
+//		for (String storeCode : proximityList) {
+//			try {
+//				synchronized (this) {
+//					// get a datagram socket
+//			        DatagramSocket socket = new DatagramSocket(clientPort);
+//			 
+//			        // send request
+//			        byte[] buf = new byte[256];
+//			        buf = (itemID + "").getBytes();
+//			        InetAddress address = InetAddress.getByName("localhost");
+//			        DatagramPacket packet = new DatagramPacket(buf, buf.length, address, portMap.get(storeCode));
+//			        socket.send(packet);
+//			     
+//			        // get response
+//			        packet = new DatagramPacket(buf, buf.length);
+//			        socket.receive(packet);
+//			 
+//			        // extract stock
+//			        received = (new String(packet.getData(), 0, packet.getLength())).split(",");
+//			        stock.put(received[0], received[1]);
+//			     
+//			        socket.close();
+//				}
+//			} catch (Exception e) {
+//				System.err.println("Tried port " + clientPort);
+//				System.err.println("Server exception: " + e.toString());
+//			    e.printStackTrace();
+//			}
+//		}
+//		// wrap stock hash in MyHashtable to satisfy the IDL 
+//		return stock.toString();
+//	}
 	
 	public void localExchange(String customerID, int boughtItemID, int boughtNumber,
 			int desiredItemID, int desiredNumber) {
@@ -246,7 +248,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 	
 	public void dispatch(Object obj) throws NoSuchItem {		
 		@SuppressWarnings("unchecked")
-		MethodRequest<RetailStoreRemoteMethod> req = (MethodRequest<RetailStoreRemoteMethod>) obj;
+		StatusPacket<RetailStoreRemoteMethod> req = (StatusPacket<RetailStoreRemoteMethod>) obj;
 		
 		switch ((RetailStoreRemoteMethod) req.getRemoteMethod()) {
 			case PURCHASE_ITEM:
@@ -275,10 +277,10 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 				);
 				break;
 				
-			case CHECK_STOCK:				
-				CheckStock checkStockReq = (CheckStock) req;				
-				localCheckStock(checkStockReq.getItemID());
-				break;
+//			case CHECK_STOCK:				
+//				CheckStock checkStockReq = (CheckStock) req;				
+//				localCheckStock(checkStockReq.getItemID());
+//				break;
 				
 			case EXCHANGE:
 				Exchange exchangeReq = (Exchange) req;
@@ -361,9 +363,9 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 	public int getId() { return id; }
 	public  HashMap<Integer, GroupMember> getGroupMap() { return groupMap; }
 	
-	public void broadcast(BasicRequest req) {
+	public void broadcast(BasicPacket req) {
 		for (GroupMember member : groupMap.values()) {
-			if (member.+isAlive()) { send(member.getHost(), req); }
+			if (member.isAlive()) { sender.FIFOSend(member.getHost(), DISPATCH_IN_PORT, req, id); }
 		}
 	}
 }

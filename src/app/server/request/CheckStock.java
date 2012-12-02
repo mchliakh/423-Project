@@ -1,8 +1,8 @@
-package app.server.requests;
+package app.server.request;
 
-import packet.MethodRequest;
+import packet.StatusPacket;
 
-public class CheckStock extends MethodRequest<RetailStoreRemoteMethod> {
+public class CheckStock extends StatusPacket<RetailStoreRemoteMethod> {
 	int itemID;	
 	
 	public CheckStock(int itemID) {

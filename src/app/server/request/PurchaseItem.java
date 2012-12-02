@@ -1,14 +1,14 @@
-package requests;
+package app.server.request;
 
-import packet.MethodRequest;
+import packet.StatusPacket;
 
-public class ReturnItem extends MethodRequest<RetailStoreRemoteMethod> {
+public class PurchaseItem extends StatusPacket<RetailStoreRemoteMethod> {
 	String customerID;
 	int itemID;
 	int numberOfItem;
 	
-	public ReturnItem(String customerID, int itemID, int numberOfItem) {
-		super(RetailStoreRemoteMethod.RETURN_ITEM);
+	public PurchaseItem(String customerID, int itemID, int numberOfItem) {
+		super(RetailStoreRemoteMethod.PURCHASE_ITEM);
 		this.customerID = customerID;
 		this.itemID = itemID;
 		this.numberOfItem = numberOfItem;
@@ -22,7 +22,7 @@ public class ReturnItem extends MethodRequest<RetailStoreRemoteMethod> {
 		return itemID;
 	}
 	
-	public int numberOfItem() {
+	public int getNumberOfItem() {
 		return numberOfItem;
 	}
 }
