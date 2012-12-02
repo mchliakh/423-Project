@@ -1,5 +1,6 @@
 package packet;
 
+
 public abstract class StatusPacket<T extends Enum<T>> extends BasicPacket {
 	private T status;
 		

@@ -1,10 +1,17 @@
 package app.server.udpservers;
 
-import app.orb.RetailStorePackage.NoSuchItem;
-import app.server.RetailStoreServerImpl;
-import udp.ObjectUDPServer;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Date;
 
-public class DispatchObjectUDPServer extends ObjectUDPServer<RetailStoreServerImpl> {
+import packet.AliveRequest;
+
+import app.server.Config;
+import app.server.RetailStoreServerImpl;
+import app.server.RetailStoreServerImpl.GroupMember;
+import udp.FIFOObjectUDPServlet;
+
+public class FailureDetectorObjectUDPServer extends FIFOObjectUDPServlet<RetailStoreServerImpl> {
 
   private class ServerDetails {
       private int id;
@@ -15,28 +22,68 @@ public class DispatchObjectUDPServer extends ObjectUDPServer<RetailStoreServerIm
       public void increaseAttempts() { attempts += 1; }
 
       public int getId() { return id; }
-      public Timestamp getTimestamp { return timestamp; }
-      public int getAttempts { return attemps; }
+      public Timestamp getTimestamp() { return timestamp; }
+      public boolean hadFailed() { return attempts > 3; }
   }
 
+  private final int INTERVAL = 50;
   private ArrayList<ServerDetails> servers = new ArrayList<ServerDetails>();
-
-	public DispatchObjectUDPServer(int port, RetailStoreServerImpl owner) {
+  private Thread receiveImAliveThread = new Thread(receiveImAlive());
+  private Thread sendImAliveThread 	  = new Thread(sendImAlive());
+  
+	public FailureDetectorObjectUDPServer(int port, RetailStoreServerImpl owner) {
 		super(port, owner);
 	}
 	
 	public void run() {
+		receiveImAliveThread.run();
+		sendImAliveThread.run();		
+	}
+	
+	public Runnable receiveImAlive() {
 		while (true) {
 			Object obj = receive();
-
-      updateServer(obj);
-       
+			
+			for (ServerDetails s : servers) {
+				if (s.getId() == AliveRequest.class.cast(obj).getId()) { s.resetAttempts();	}
+								
+				Date date			= new java.util.Date();
+				Timestamp timestamp = new Timestamp(date.getTime());
+				
+				if (timestamp.compareTo(s.getTimestamp()) >  INTERVAL) {
+					s.increaseAttempts();
+					if (s.hadFailed()) {
+						GroupMember groupMember =  getOwner().getGroupMap().get(s.getId());						
+						groupMember.setToFailed();
+						if (groupMember.isLeader()) {
+							(new Thread(new ElectionServlet(Config.ELECTION_IN_PORT, getOwner()))).start(); 			
+						}
+					}
+				}
+			}
+						
+		}
+	}
+	
+	public Runnable sendImAlive() {
+		long start =  System.currentTimeMillis();
+		long end   =  System.currentTimeMillis();
+		
+		while (true) {
+			end = System.currentTimeMillis();
+			if (end - start > INTERVAL) {
+				AliveRequest request = new AliveRequest();
+				request.setId(getOwner().getId());
+				getOwner().broadcast(request);
+				start = System.currentTimeMillis();
+			}
 			try {
-				getOwner().dispatch(obj);
-			} catch (NoSuchItem e) {
+				Thread.sleep(50);
+			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}
+			}			
 		}
+		
 	}
 }
