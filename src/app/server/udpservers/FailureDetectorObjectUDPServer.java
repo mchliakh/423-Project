@@ -6,6 +6,7 @@ import java.util.Date;
 
 import packet.AliveRequest;
 
+import app.server.Config;
 import app.server.RetailStoreServerImpl;
 import app.server.RetailStoreServerImpl.GroupMember;
 import udp.FIFOObjectUDPServlet;
@@ -55,7 +56,7 @@ public class FailureDetectorObjectUDPServer extends FIFOObjectUDPServlet<RetailS
 						GroupMember groupMember =  getOwner().getGroupMap().get(s.getId());						
 						groupMember.setToFailed();
 						if (groupMember.isLeader()) {
-							// if s is leader, trigger election							
+							(new Thread(new ElectionServlet(Config.ELECTION_IN_PORT, getOwner()))).start(); 			
 						}
 					}
 				}

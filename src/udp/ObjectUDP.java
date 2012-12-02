@@ -11,6 +11,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 
 public class ObjectUDP {
         private final int BUFFER_SIZE = 256;
@@ -76,7 +77,7 @@ public class ObjectUDP {
             try {
                 // receive request
                 byte[] buf = new byte[BUFFER_SIZE];
-                DatagramPacket packet = new DatagramPacket(buf, buf.length);
+                DatagramPacket packet = new DatagramPacket(buf, buf.length);                
                 socket.receive(packet);
 
                 // unmarshall the object
@@ -90,6 +91,29 @@ public class ObjectUDP {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
+            return obj;
+        }
+        
+
+        public Object receiveWithTimeout(int timeout) throws SocketTimeoutException {
+            Object obj = null;
+            try {
+                // receive request
+                byte[] buf = new byte[BUFFER_SIZE];
+                DatagramPacket packet = new DatagramPacket(buf, buf.length);
+                socket.setSoTimeout(timeout);                
+                socket.receive(packet);
+                
+
+                // unmarshall the object
+                ByteArrayInputStream bStream = new ByteArrayInputStream(buf);
+                ObjectInput oi = new ObjectInputStream(bStream);
+                obj = oi.readObject();
+            } catch (SocketTimeoutException e) { 
+            	throw e;
+            } catch (Exception e) { 
+                e.printStackTrace();
+            }            
             return obj;
         }
 

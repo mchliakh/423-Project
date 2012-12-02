@@ -19,14 +19,18 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 	private final int ITEM_ID_OFFSET = 1000;
 	private final int ITEM_MAX_QUANTITY = 40;
 	
-	private final int DISPATCH_IN_PORT = 4445;
-	private final int DISPATCH_OUT_PORT = 4446;
+
+
+	private ElectionState electionState = ElectionState.IDLE;
+	
+
 
 	private Hashtable<Integer, Integer> inventory = new Hashtable<Integer, Integer>();
 	private ArrayList<String> proximityList = new ArrayList<String>();
 	private HashMap<Integer, GroupMember> groupMap = new HashMap<Integer, GroupMember>();
 	
-	private FIFOObjectUDP sender = new FIFOObjectUDP(DISPATCH_OUT_PORT);
+	private FIFOObjectUDP sender = new FIFOObjectUDP(Config.DISPATCH_OUT_PORT);
+	
 	public class GroupMember {
 		private String host;
 		private boolean isAlive = true;
@@ -54,6 +58,10 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		
 		public boolean isLeader() { 
 			return isLeader; 
+		}
+		
+		public void setIsLeader(boolean isLeader) {
+			this.isLeader = isLeader;
 		}
 	}
 	
@@ -99,7 +107,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		
 		// launch dispatch server
 		if (!isLeader) { // only if not the leader
-			dispatchServer = new Thread(new DispatchServlet(DISPATCH_IN_PORT, this));
+			dispatchServer = new Thread(new DispatchServlet(Config.DISPATCH_IN_PORT, this));
 			dispatchServer.start();
 		}
 		
@@ -356,16 +364,41 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		if (!success) throw new InsufficientQuantity();
 	}
 	
-	private boolean hasHighestRank() {
+	public boolean hasHighestRank() {
 		return id == MAX_ID;
 	}
 	
 	public int getId() { return id; }
 	public  HashMap<Integer, GroupMember> getGroupMap() { return groupMap; }
+	public ElectionState getElectionState() {
+		return electionState;
+	}
+
+	public void setElectionState(ElectionState electionState) {
+		this.electionState = electionState;
+	}
 	
 	public void broadcast(BasicPacket req) {
 		for (GroupMember member : groupMap.values()) {
-			if (member.isAlive()) { sender.FIFOSend(member.getHost(), DISPATCH_IN_PORT, req, id); }
+			if (member.isAlive()) { sender.FIFOSend(member.getHost(), Config.DISPATCH_IN_PORT, req, id); }
 		}
+	}
+	
+	public void broadcastHigherId(BasicPacket req) {
+		for (int i = id + 1; i != groupMap.size(); i++) {
+			sender.FIFOSend(groupMap.get(i).getHost(), Config.ELECTION_IN_PORT, req, id);
+		}
+	}
+
+	public void setLeaderId(int leaderId) {
+		if (leaderId == id) {
+			isLeader = true;
+		}
+		
+		for (int i = 1; i <= groupMap.size(); i++) {
+			groupMap.get(i).setIsLeader(false);					
+		}	
+		
+		groupMap.get(leaderId).setIsLeader(true);
 	}
 }
