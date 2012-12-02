@@ -23,9 +23,10 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 	private ArrayList<String> proximityList = new ArrayList<String>();
 	private HashMap<Integer, GroupMember> groupMap = new HashMap<Integer, GroupMember>();
 	
-	private class GroupMember {
+	public class GroupMember {
 		private String host;
 		private boolean isAlive = true;
+		private boolean isLeader = false;
 		
 		public GroupMember(String host) {
 			this.host = host;
@@ -45,6 +46,10 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		
 		public void setToFailed() {
 			isAlive = false;
+		}
+		
+		public boolean isLeader() { 
+			return isLeader; 
 		}
 	}
 	
@@ -353,7 +358,10 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		return id == MAX_ID;
 	}
 	
-	private void broadcast(BasicRequest req) {
+	public int getId() { return id; }
+	public  HashMap<Integer, GroupMember> getGroupMap() { return groupMap; }
+	
+	public void broadcast(BasicRequest req) {
 		for (GroupMember member : groupMap.values()) {
 			if (member.+isAlive()) { send(member.getHost(), req); }
 		}
