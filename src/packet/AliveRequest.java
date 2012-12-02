@@ -1,6 +1,6 @@
 package packet;
 
-public class AliveRequest extends BasicRequest {
+public class AliveRequest extends BasicPacket {
 	private int id;
 	
 	public AliveRequest() {

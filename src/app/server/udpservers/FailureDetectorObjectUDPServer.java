@@ -6,12 +6,11 @@ import java.util.Date;
 
 import packet.AliveRequest;
 
-import app.orb.RetailStorePackage.NoSuchItem;
 import app.server.RetailStoreServerImpl;
 import app.server.RetailStoreServerImpl.GroupMember;
-import udp.ObjectUDPServer;
+import udp.FIFOObjectUDPServlet;
 
-public class FailureDetectorObjectUDPServer extends ObjectUDPServer<RetailStoreServerImpl> {
+public class FailureDetectorObjectUDPServer extends FIFOObjectUDPServlet<RetailStoreServerImpl> {
 
   private class ServerDetails {
       private int id;
@@ -77,7 +76,12 @@ public class FailureDetectorObjectUDPServer extends ObjectUDPServer<RetailStoreS
 				getOwner().broadcast(request);
 				start = System.currentTimeMillis();
 			}
-			Thread.sleep(50);			
+			try {
+				Thread.sleep(50);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}			
 		}
 		
 	}
