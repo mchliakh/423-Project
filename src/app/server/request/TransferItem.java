@@ -1,8 +1,8 @@
-package requests;
+package app.server.request;
 
-import packet.MethodRequest;
+import packet.StatusPacket;
 
-public class TransferItem extends MethodRequest<RetailStoreRemoteMethod> {	
+public class TransferItem extends StatusPacket<RetailStoreRemoteMethod> {	
 	int itemID;
 	int numberOfItem;
 	
@@ -16,7 +16,7 @@ public class TransferItem extends MethodRequest<RetailStoreRemoteMethod> {
 		return itemID;
 	}
 	
-	public int numberOfItem() {
+	public int getNumberOfItem() {
 		return numberOfItem;
 	}
 }

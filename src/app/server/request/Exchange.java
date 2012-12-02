@@ -1,9 +1,9 @@
-package requests;
+package app.server.request;
 
-import packet.MethodRequest;
+import packet.StatusPacket;
 
 
-public class Exchange extends MethodRequest<RetailStoreRemoteMethod> {
+public class Exchange extends StatusPacket<RetailStoreRemoteMethod> {
 	String customerID;
 	int boughtItemID;
 	int boughtNumber;
