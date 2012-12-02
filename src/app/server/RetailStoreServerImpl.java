@@ -2,16 +2,15 @@ package app.server;
 
 import java.util.*;
 import java.io.*;
-import java.net.*;
-
 import packet.BasicPacket;
 import packet.StatusPacket;
 import udp.FIFOObjectUDP;
 import app.orb.RetailStorePackage.InsufficientQuantity;
 import app.orb.RetailStorePackage.InvalidReturn;
 import app.orb.RetailStorePackage.NoSuchItem;
-import app.server.StockServer;
 import app.server.request.*;
+import app.server.response.Response;
+import app.server.response.ReturnStatus;
 import app.server.udpservers.*;
 
 public class RetailStoreServerImpl extends RetailStoreServer {
@@ -19,14 +18,14 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 	private final int ITEM_ID_OFFSET = 1000;
 	private final int ITEM_MAX_QUANTITY = 40;
 	
-	private final int DISPATCH_IN_PORT = 4445;
-	private final int DISPATCH_OUT_PORT = 4446;
+	private final int DISPATCH_IN_PORT = 4445; // receive
+	private final int DISPATCH_OUT_PORT = 4446; // send
 
 	private Hashtable<Integer, Integer> inventory = new Hashtable<Integer, Integer>();
 	private ArrayList<String> proximityList = new ArrayList<String>();
 	private HashMap<Integer, GroupMember> groupMap = new HashMap<Integer, GroupMember>();
 	
-	private FIFOObjectUDP sender = new FIFOObjectUDP(DISPATCH_OUT_PORT);
+	private FIFOObjectUDP udp = new FIFOObjectUDP(DISPATCH_IN_PORT);
 	
 	private class GroupMember {
 		private String host;
@@ -56,6 +55,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 	private Thread dispatchServer;
 	
 	private int id;
+	private int counter = 0;
 	
 	private boolean isLeader = false;
 	
@@ -109,21 +109,68 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 	@Override
 	public void purchaseItem(String customerID, int itemID, int numberOfItem) throws NoSuchItem, InsufficientQuantity {
 		PurchaseItem req = new PurchaseItem(customerID, itemID, numberOfItem);
+		req.setId(counter++);
 		broadcast(req);
+		int responseId = -2;
+		Response resp = null;
+		while (responseId != counter-1) {
+			resp = (Response) udp.receive();
+			responseId = resp.getId();
+		}
+		switch ((ReturnStatus) resp.getStatus()) {
+			case SUCCESS:
+				// return
+				break;
+			case INSUFFICIENT_QUANTITY:
+				throw new InsufficientQuantity();
+			case NO_SUCH_ITEM:
+				throw new NoSuchItem();
+			default:
+				break;
+		}
 	}
 	
 	@Override
 	public void returnItem(String customerID, int itemID, int numberOfItem) throws InvalidReturn {
-		ReturnItem req = new ReturnItem(customerID, itemID, numberOfItem);		
-		broadcast(req);	
+		ReturnItem req = new ReturnItem(customerID, itemID, numberOfItem);
+		req.setId(counter++);
+		broadcast(req);
+		int responseId = -2;
+		Response resp = null;
+		while (responseId != counter-1) {
+			resp = (Response) udp.receive();
+			responseId = resp.getId();
+		}
+		switch ((ReturnStatus) resp.getStatus()) {
+			case SUCCESS:
+				// return
+				break;
+			case INVALID_RETURN:
+				throw new InvalidReturn();
+			default:
+				break;
+		}
 	}
 	
 	@Override
 	public boolean transferItem(int itemID, int numberOfItem) {
 		TransferItem req = new TransferItem(itemID, numberOfItem);		
-		
-		return false; //TODO: Retrun true value
-		// FIFO send request over UDP	
+		req.setId(counter++);
+		broadcast(req);
+		int responseId = -2;
+		Response resp = null;
+		while (responseId != counter-1) {
+			resp = (Response) udp.receive();
+			responseId = resp.getId();
+		}
+		switch ((ReturnStatus) resp.getStatus()) {
+			case TRUE:
+				return true;
+			case FALSE:
+				return false;
+			default:
+				return false;
+		}	
 	}
 	
 	@Override
@@ -138,34 +185,57 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 	@Override
 	public void exchange(String customerID, int boughtItemID, int boughtNumber,
 			int desiredItemID, int desiredNumber) throws InvalidReturn, NoSuchItem, InsufficientQuantity {
-		Exchange request = new Exchange(customerID, boughtItemID, boughtNumber, desiredItemID, desiredNumber);
-				
-		// FIFO send request over UDP
+		Exchange req = new Exchange(customerID, boughtItemID, boughtNumber, desiredItemID, desiredNumber);
+		req.setId(counter++);
+		broadcast(req);
+		int responseId = -2;
+		Response resp = null;
+		while (responseId != counter-1) {
+			resp = (Response) udp.receive();
+			responseId = resp.getId();
+		}
+		switch ((ReturnStatus) resp.getStatus()) {
+			case SUCCESS:
+				// return
+				break;
+			case INSUFFICIENT_QUANTITY:
+				throw new InsufficientQuantity();
+			case INVALID_RETURN:
+				throw new InvalidReturn();
+			case NO_SUCH_ITEM:
+				throw new NoSuchItem();
+			default:
+				break;
+		}
 	}
 	
-	private synchronized void localPurchaseItem(String customerID, int itemID, int numberOfItem) throws NoSuchItem {
+	private synchronized Response localPurchaseItem(String customerID, int itemID, int numberOfItem) {
 		if (!inventory.containsKey(itemID)) {
-			throw new NoSuchItem();
+			return new Response(ReturnStatus.NO_SUCH_ITEM);
 		} else if (inventory.get(itemID) < numberOfItem) {
-			//attemptTransfer(itemID, numberOfItem);
+			try {
+				attemptTransfer(itemID, numberOfItem);
+			} catch (InsufficientQuantity e) {
+				return new Response(ReturnStatus.INSUFFICIENT_QUANTITY);
+			}
 		} else {
 			inventory.put(itemID, Integer.valueOf(inventory.get(itemID).intValue() - numberOfItem));
 		}
 		
-		try
-		{
+		try	{
 			recordTransaction(customerID, itemID, numberOfItem);
 		} catch (FileNotFoundException e) {
 			System.err.println("Could not open file!");
 		}
-		
+			
 		System.out.println("Customer " + customerID + " purchased " + numberOfItem + " of item " + itemID + ".");
 		printInventory();
+		return new Response(ReturnStatus.SUCCESS);
 	}
 	
-	public void localReturnItem(String customerID, int itemID, int numberOfItem) {
+	public Response localReturnItem(String customerID, int itemID, int numberOfItem) {
 		if (numberOfItem > getTotalPurchased(customerID)) {
-//			throw new InvalidReturn(); 
+			return new Response(ReturnStatus.INVALID_RETURN);
 		} else {
 			inventory.put(itemID, Integer.valueOf(inventory.get(itemID).intValue() + numberOfItem));
 
@@ -179,17 +249,18 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 			System.out.println("Customer " + customerID + " returned " + numberOfItem + " of item " + itemID + ".");
 			printInventory();
 		}
+		return new Response(ReturnStatus.SUCCESS);
 	}
 	
-	public synchronized boolean localTransferItem(int itemID, int numberOfItem) {
+	public synchronized Response localTransferItem(int itemID, int numberOfItem) {
 		System.out.println("Received transfer attempt for "+ numberOfItem + " of item " + itemID + ".");
 		
-		if (!inventory.containsKey(itemID) || inventory.get(itemID) < numberOfItem) { return false; }
+		if (!inventory.containsKey(itemID) || inventory.get(itemID) < numberOfItem) { return new Response(ReturnStatus.FALSE); }
 		
 		inventory.put(itemID, Integer.valueOf(inventory.get(itemID).intValue() - numberOfItem));
 		System.out.println("Transfered " + numberOfItem + " of item " + itemID + ".");
 		printInventory();
-		return true;
+		return new Response(ReturnStatus.TRUE);
 	}
 	
 //	public String localCheckStock(int itemID) {
@@ -228,28 +299,38 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 //		return stock.toString();
 //	}
 	
-	public void localExchange(String customerID, int boughtItemID, int boughtNumber,
+	public Response localExchange(String customerID, int boughtItemID, int boughtNumber,
 			int desiredItemID, int desiredNumber) {
-		if (desiredNumber > getTotalPurchased(customerID)) {
-			//throw new InvalidReturn(); 
-		} else {
-			//purchaseItem(customerID, desiredItemID, desiredNumber);
+		try{
+			if (desiredNumber > getTotalPurchased(customerID)) {
+				return new Response(ReturnStatus.INVALID_RETURN); 
+			} else {
+				purchaseItem(customerID, desiredItemID, desiredNumber);
+			}
+			returnItem(customerID, boughtItemID, boughtNumber);
+			
+			System.out.println("Customer " + customerID + " exchanged " + boughtNumber + " of item " + boughtItemID + " for " +
+					desiredNumber + " of item " + desiredItemID + ".");
+			printInventory();
+		} catch (InvalidReturn e) {
+			return new Response(ReturnStatus.INVALID_RETURN);
+		} catch (NoSuchItem e) {
+			return new Response(ReturnStatus.NO_SUCH_ITEM);
+		} catch (InsufficientQuantity e) {
+			return new Response(ReturnStatus.INSUFFICIENT_QUANTITY);
 		}
-		//returnItem(customerID, boughtItemID, boughtNumber);
-		//TODO: Handle exceptions
-		System.out.println("Customer " + customerID + " exchanged " + boughtNumber + " of item " + boughtItemID + " for " +
-				desiredNumber + " of item " + desiredItemID + ".");
-		printInventory();
+		return new Response(ReturnStatus.SUCCESS);
 	}
 	
 	public void dispatch(Object obj) throws NoSuchItem {		
 		@SuppressWarnings("unchecked")
 		StatusPacket<RetailStoreRemoteMethod> req = (StatusPacket<RetailStoreRemoteMethod>) obj;
+		Response resp = null;
 		
-		switch ((RetailStoreRemoteMethod) req.getRemoteMethod()) {
+		switch ((RetailStoreRemoteMethod) req.getStatus()) {
 			case PURCHASE_ITEM:
 				PurchaseItem purchaseItemReq = (PurchaseItem) req;
-				localPurchaseItem(
+				resp = localPurchaseItem(
 					purchaseItemReq.getCustomerID(),
 					purchaseItemReq.getItemID(),
 					purchaseItemReq.getNumberOfItem()
@@ -258,7 +339,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 				
 			case RETURN_ITEM:
 				ReturnItem returnItemReq = (ReturnItem) req;
-				localReturnItem(
+				resp = localReturnItem(
 					returnItemReq.getCustomerID(),
 					returnItemReq.getItemID(),
 					returnItemReq.getNumberOfItem()
@@ -267,7 +348,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 				
 			case TRANSFER_ITEM:
 				TransferItem transferItemReq = (TransferItem) req;
-				localTransferItem(
+				resp = localTransferItem(
 					transferItemReq.getItemID(),
 					transferItemReq.getNumberOfItem()
 				);
@@ -280,7 +361,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 				
 			case EXCHANGE:
 				Exchange exchangeReq = (Exchange) req;
-				localExchange(
+				resp = localExchange(
 					exchangeReq.getCustomerID(),
 					exchangeReq.getBoughtItemID(),
 					exchangeReq.getBoughtNumber(),
@@ -291,8 +372,9 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 								
 			default:
 				break;
-		}	
-	
+		}
+		resp.setId(req.getId());
+		udp.send(groupMap.get(getLeaderId()).getHost(), DISPATCH_OUT_PORT, resp);
 	}
 	
 		public String getStoreCode() {
@@ -356,9 +438,14 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		return id == MAX_ID;
 	}
 	
+	private int getLeaderId() {
+		// TODO!!!
+		return MAX_ID;
+	}
+	
 	private void broadcast(BasicPacket req) {
 		for (GroupMember member : groupMap.values()) {
-			if (member.isAlive()) { sender.FIFOSend(member.getHost(), DISPATCH_IN_PORT, req, id); }
+			if (member.isAlive()) { udp.FIFOSend(member.getHost(), DISPATCH_OUT_PORT, req, id); }
 		}
 	}
 }
