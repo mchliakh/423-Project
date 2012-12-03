@@ -30,8 +30,8 @@ public class FIFOObjectUDP extends ObjectUDP {
 	}
 	
 	private int counter = 0;
-	private ArrayList<ArrayList<Object>> queue;
-	private ArrayList<Iterator<Object>> iteratorList;
+	private ArrayList<ArrayList<Object>> queue 		 = new ArrayList<ArrayList<Object>>();
+	private ArrayList<Iterator<Object>> iteratorList = new ArrayList<Iterator<Object>>();
 
 	public FIFOObjectUDP(int port) {
 		super(port);

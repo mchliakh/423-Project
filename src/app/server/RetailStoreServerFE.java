@@ -12,27 +12,27 @@ public class RetailStoreServerFE extends RetailStoreServer {
 
 	@Override
 	public void purchaseItem(String customerID, int itemID, int numberOfItem) throws NoSuchItem, InsufficientQuantity {
-		getORBInterface(getStoreCode()).purchaseItem(customerID, itemID, numberOfItem);
+		getORBInterface(getStoreCode() + MAX_ID).purchaseItem(customerID, itemID, numberOfItem);
 	}
 
 	@Override
 	public void returnItem(String customerID, int itemID, int numberOfItem) throws InvalidReturn {
-		getORBInterface(getStoreCode()).returnItem(customerID, itemID, numberOfItem);
+		getORBInterface(getStoreCode() + MAX_ID).returnItem(customerID, itemID, numberOfItem);
 	}
 
 	@Override
 	public boolean transferItem(int itemID, int numberOfItem) {
-		return getORBInterface(getStoreCode()).transferItem(itemID, numberOfItem);
+		return getORBInterface(getStoreCode() + MAX_ID).transferItem(itemID, numberOfItem);
 	}
 
 	@Override
 	public String checkStock(int itemID) {
-		return getORBInterface(getStoreCode()).checkStock(itemID);
+		return getORBInterface(getStoreCode() + MAX_ID).checkStock(itemID);
 	}
 	
 	@Override
 	public void exchange(String customerID, int boughtItemID, int boughtNumber,
 			int desiredItemID, int desiredNumber) throws InvalidReturn, NoSuchItem, InsufficientQuantity {
-		getORBInterface(getStoreCode()).exchange(customerID, boughtItemID, boughtNumber, desiredItemID, desiredNumber);
+		getORBInterface(getStoreCode() + MAX_ID).exchange(customerID, boughtItemID, boughtNumber, desiredItemID, desiredNumber);
 	}
 }

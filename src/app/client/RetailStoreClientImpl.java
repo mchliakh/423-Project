@@ -15,11 +15,11 @@ import app.orb.RetailStorePackage.InsufficientQuantity;
 import app.orb.RetailStorePackage.InvalidReturn;
 import app.orb.RetailStorePackage.NoSuchItem;
 
-public class RetailStoreClientImpl implements Runnable {
-	private final int INVENTORY_SIZE = 10;
-	private final int ITEM_ID_OFFSET = 1000;
-	private final int PURCHASE_QUANTITY = 2;
-	private final int RETURN_QUANTITY = 2;
+public abstract class RetailStoreClientImpl implements Runnable {
+	public final int INVENTORY_SIZE = 10;
+	public final int ITEM_ID_OFFSET = 1000;
+	public final int PURCHASE_QUANTITY = 2;
+	public final int RETURN_QUANTITY = 2;
 	
 	private String customerID;
 	private app.orb.RetailStore store = null;
@@ -70,7 +70,7 @@ public class RetailStoreClientImpl implements Runnable {
 	 * @param args
 	 * @throws IOException
 	 */
-	private void initORB(String storeCode, String[] args) throws IOException {
+	public void initORB(String storeCode, String[] args) throws IOException {
 
 		Properties props = System.getProperties();
 		props.setProperty("org.omg.CORBA.ORBClass", "com.sun.corba.se.internal.POA.POAORB");
@@ -118,55 +118,9 @@ public class RetailStoreClientImpl implements Runnable {
 	/**
 	 * Test driver for RetailStoreClientImpl.
 	 */
-	public void run() {
-		for (int i = 0; i < INVENTORY_SIZE; i++) {
-			try {
-				// check the stock
-				System.out.println(checkStock(ITEM_ID_OFFSET + i));
-				// try to purchase the item
-				purchaseItem(ITEM_ID_OFFSET + i, PURCHASE_QUANTITY);
-			} catch (NoSuchItem e) {
-				System.err.println(customerID + ": Item with ID " +  (ITEM_ID_OFFSET + i) + " does not exist!");
-			} catch (InsufficientQuantity e) {
-				System.err.println(customerID + ": There is not enough stock to fulfill your order!");
-			} catch (Exception e) {
-			    System.err.println("Purchase exception: " + e.toString());
-			    e.printStackTrace();
-			}
-			System.out.println(customerID +  ": Successfully purchased " + PURCHASE_QUANTITY + " of item " + (ITEM_ID_OFFSET + i) + ".");
-		}
-		for (int i = INVENTORY_SIZE - 1; i >= 0; i--) {
-			try {
-				// check the stock
-				System.out.println(checkStock(ITEM_ID_OFFSET + i));
-				// try to return the item
-				returnItem(ITEM_ID_OFFSET + i, RETURN_QUANTITY);
-			} catch (InvalidReturn e) {
-				System.err.println(customerID + ": Warning! You attempted to return more than you purchased.");
-			} catch (Exception e) {
-			    System.err.println("Return exception: " + e.toString());
-			    e.printStackTrace();
-			}
-			System.out.println(customerID +  ": Successfully returned " + RETURN_QUANTITY + " of item " + (ITEM_ID_OFFSET + i) + ".");
-		}
-		try {
-			// try to purchase an item
-			purchaseItem(1002, PURCHASE_QUANTITY);
-			System.out.println(customerID +  ": Successfully purchased " + PURCHASE_QUANTITY + " of item 1002.");
-			// try to exchange the item
-			exchange(1002, PURCHASE_QUANTITY, 1008, PURCHASE_QUANTITY);
-		} catch (NoSuchItem e) {
-			System.err.println(customerID + ": Item with ID 1008 does not exist!");
-		} catch (InsufficientQuantity e) {
-			System.err.println(customerID + ": There is not enough stock to fulfill your order!");
-		} catch (InvalidReturn e) {
-			System.err.println(customerID + ": Warning! You attempted to return more than you purchased.");
-		} catch (Exception e) {
-		    System.err.println("Return exception: " + e.toString());
-		    e.printStackTrace();
-		}
-		System.out.println(customerID +  ": Successfully exchanged " + PURCHASE_QUANTITY + " of item 1002 for " +
-				PURCHASE_QUANTITY + " of item 1008.");
-		shutdown();
+	public abstract void run();
+	
+	public String getCustomerID() {
+		return customerID;
 	}
 }

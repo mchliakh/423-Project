@@ -11,7 +11,7 @@ import app.orb.RetailStorePackage.NoSuchItem;
 import app.server.request.*;
 import app.server.response.Response;
 import app.server.response.ReturnStatus;
-import app.server.udpservers.*;
+import app.server.udpservlet.*;
 
 public class RetailStoreServerImpl extends RetailStoreServer {
 	private final int INVENTORY_SIZE = 10;
@@ -20,14 +20,12 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 	
 
 	private ElectionState electionState = ElectionState.IDLE;
-	
-
 
 	private Hashtable<Integer, Integer> inventory = new Hashtable<Integer, Integer>();
 	private ArrayList<String> proximityList = new ArrayList<String>();
 	private HashMap<Integer, GroupMember> groupMap = new HashMap<Integer, GroupMember>();
 	
-	private FIFOObjectUDP udp = new FIFOObjectUDP(DISPATCH_IN_PORT);
+	private FIFOObjectUDP udp = new FIFOObjectUDP(Config.DISPATCH_IN_PORT);
 	
 	public class GroupMember {
 		private String host;
@@ -100,7 +98,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		}
 		
 		// build group map
-		groupMap.put(1, new GroupMember("nurse"));
+		//groupMap.put(1, new GroupMember("nurse"));
 		groupMap.put(2, new GroupMember("noyori"));
 		groupMap.put(3, new GroupMember("north"));
 		
@@ -111,10 +109,17 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		}
 		
 		 // seed inventory with random stock
-		 Random generator = new Random();
-		 for (int i = 0; i < INVENTORY_SIZE; i++) {
-			inventory.put(ITEM_ID_OFFSET + i, generator.nextInt(ITEM_MAX_QUANTITY));
-		 }
+//		 Random generator = new Random();
+//		 for (int i = 0; i < INVENTORY_SIZE; i++) {
+//			inventory.put(ITEM_ID_OFFSET + i, generator.nextInt(ITEM_MAX_QUANTITY));
+//		 }
+		
+		// seed inventory with stock
+		inventory.put(1000, 60);
+		inventory.put(1001, 10);
+		inventory.put(1002, 15);
+		inventory.put(1003, 10);
+		inventory.put(1004, 5);
 	}
 
 	@Override
@@ -385,7 +390,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 				break;
 		}
 		resp.setId(req.getId());
-		udp.send(groupMap.get(getLeaderId()).getHost(), DISPATCH_OUT_PORT, resp);
+		udp.send(groupMap.get(getLeaderId()).getHost(), Config.DISPATCH_OUT_PORT, resp);
 	}
 	
 		public String getStoreCode() {
@@ -454,37 +459,37 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		return MAX_ID;
 	}
 	
-	public int getId() { return id; }
-	public  HashMap<Integer, GroupMember> getGroupMap() { return groupMap; }
-	public ElectionState getElectionState() {
-		return electionState;
-	}
-
-	public void setElectionState(ElectionState electionState) {
-		this.electionState = electionState;
-	}
-	
+//	public int getId() { return id; }
+//	public  HashMap<Integer, GroupMember> getGroupMap() { return groupMap; }
+//	public ElectionState getElectionState() {
+//		return electionState;
+//	}
+//
+//	public void setElectionState(ElectionState electionState) {
+//		this.electionState = electionState;
+//	}
+//	
 	public void broadcast(BasicPacket req) {
 		for (GroupMember member : groupMap.values()) {
 			if (member.isAlive()) { udp.FIFOSend(member.getHost(), Config.DISPATCH_IN_PORT, req, id); }
 		}
 	}
-	
-	public void broadcastHigherId(BasicPacket req) {
-		for (int i = id + 1; i != groupMap.size(); i++) {
-			udp.FIFOSend(groupMap.get(i).getHost(), Config.ELECTION_IN_PORT, req, id);
-		}
-	}
-
-	public void setLeaderId(int leaderId) {
-		if (leaderId == id) {
-			isLeader = true;
-		}
-		
-		for (int i = 1; i <= groupMap.size(); i++) {
-			groupMap.get(i).setIsLeader(false);					
-		}	
-		
-		groupMap.get(leaderId).setIsLeader(true);
-	}
+//	
+//	public void broadcastHigherId(BasicPacket req) {
+//		for (int i = id + 1; i != groupMap.size(); i++) {
+//			udp.FIFOSend(groupMap.get(i).getHost(), Config.ELECTION_IN_PORT, req, id);
+//		}
+//	}
+//
+//	public void setLeaderId(int leaderId) {
+//		if (leaderId == id) {
+//			isLeader = true;
+//		}
+//		
+//		for (int i = 1; i <= groupMap.size(); i++) {
+//			groupMap.get(i).setIsLeader(false);					
+//		}	
+//		
+//		groupMap.get(leaderId).setIsLeader(true);
+//	}
 }

@@ -1,4 +1,4 @@
-package app.server.udpservers;
+package app.server.udpservlet;
 
 import packet.CoordinatorPacket;
 import packet.ElectionPacket;

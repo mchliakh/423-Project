@@ -1,4 +1,4 @@
-package app.server.udpservers;
+package app.server.udpservlet;
 
 import java.net.SocketTimeoutException;
 import packet.AnswerPacket;
