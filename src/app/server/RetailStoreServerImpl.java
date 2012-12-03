@@ -25,7 +25,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 	private ArrayList<String> proximityList = new ArrayList<String>();
 	private HashMap<Integer, GroupMember> groupMap = new HashMap<Integer, GroupMember>();
 	
-	private FIFOObjectUDP udp = new FIFOObjectUDP(Config.DISPATCH_IN_PORT);
+	private FIFOObjectUDP udp;
 	
 	public class GroupMember {
 		private String host;
@@ -106,6 +106,8 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		if (!isLeader) { // only if not the leader
 			dispatchServer = new Thread(new DispatchServlet(Config.DISPATCH_IN_PORT, this));
 			dispatchServer.start();
+		} else {
+			udp = new FIFOObjectUDP(Config.DISPATCH_IN_PORT);
 		}
 		
 		 // seed inventory with random stock
@@ -124,6 +126,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 
 	@Override
 	public void purchaseItem(String customerID, int itemID, int numberOfItem) throws NoSuchItem, InsufficientQuantity {
+		System.out.println("Received \"purchaseItem\", broadcating.");
 		PurchaseItem req = new PurchaseItem(customerID, itemID, numberOfItem);
 		req.setId(counter++);
 		broadcast(req);
@@ -470,8 +473,9 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 //	}
 //	
 	public void broadcast(BasicPacket req) {
+		System.out.println("Attemping to broadcast " + ((StatusPacket) req).getStatus());
 		for (GroupMember member : groupMap.values()) {
-			if (member.isAlive()) { udp.FIFOSend(member.getHost(), Config.DISPATCH_IN_PORT, req, id); }
+			if (member.isAlive()) { udp.FIFOSend(member.getHost(), Config.DISPATCH_OUT_PORT, req, id); }
 		}
 	}
 //	

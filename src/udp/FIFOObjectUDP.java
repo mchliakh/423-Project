@@ -1,16 +1,20 @@
 package udp;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 
 public class FIFOObjectUDP extends ObjectUDP {
 	
-	private class Message {
+	private class Message implements Serializable {
+
+		private static final long serialVersionUID = -6214114249577926570L;
+		
 		private int sequenceNumber;
 		private int senderID;
-		private Object obj;
+		private Serializable obj;
 		
-		public Message(int sequenceNumber, int senderID, Object obj) {
+		public Message(int sequenceNumber, int senderID, Serializable obj) {
 			this.sequenceNumber = sequenceNumber;
 			this.senderID = senderID;
 			this.obj = obj;
@@ -24,7 +28,7 @@ public class FIFOObjectUDP extends ObjectUDP {
 			return senderID;
 		}
 		
-		public Object getObject() {
+		public Serializable getObject() {
 			return obj;
 		}
 	}
@@ -40,7 +44,7 @@ public class FIFOObjectUDP extends ObjectUDP {
 		}
 	}
 	
-	public void FIFOSend(String host, int port, Object obj, int senderID) {
+	public void FIFOSend(String host, int port, Serializable obj, int senderID) {
 		Message message = new Message(counter++, senderID, obj);
 		super.send(host, port, message);
 	}

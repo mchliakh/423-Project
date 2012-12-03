@@ -7,6 +7,7 @@ import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -27,7 +28,7 @@ public class ObjectUDP {
 	        }
         }
 
-        public void send(String host, int port, Object obj) {
+        public void send(String host, int port, Serializable obj) {
         	try {
             // marshal the object
             ByteArrayOutputStream bStream = new ByteArrayOutputStream();

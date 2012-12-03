@@ -1,6 +1,8 @@
 package app.server.request;
 
-public enum RetailStoreRemoteMethod {
+import java.io.Serializable;
+
+public enum RetailStoreRemoteMethod implements Serializable {
 	PURCHASE_ITEM, RETURN_ITEM, TRANSFER_ITEM,
 	CHECK_STOCK, EXCHANGE
 }
