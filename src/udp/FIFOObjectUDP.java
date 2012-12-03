@@ -4,8 +4,10 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-public class FIFOObjectUDP extends ObjectUDP {
+public class FIFOObjectUDP extends ObjectUDP implements Serializable {
 	
+	private static final long serialVersionUID = -5234768430440092486L;
+
 	private class Message implements Serializable {
 
 		private static final long serialVersionUID = -6214114249577926570L;
