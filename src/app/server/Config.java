@@ -6,4 +6,6 @@ public class Config {
 	
 	public static int ELECTION_IN_PORT = 4447;
 	public static int ELECTION_OUT_PORT = 4448;
+	
+	public static String FRONT_END_NAME = "mojave";
 }

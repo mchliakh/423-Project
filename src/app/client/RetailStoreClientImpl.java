@@ -14,6 +14,7 @@ import org.omg.CosNaming.NamingContextPackage.NotFound;
 import app.orb.RetailStorePackage.InsufficientQuantity;
 import app.orb.RetailStorePackage.InvalidReturn;
 import app.orb.RetailStorePackage.NoSuchItem;
+import app.server.Config;
 
 public abstract class RetailStoreClientImpl implements Runnable {
 	public final int INVENTORY_SIZE = 10;
@@ -42,7 +43,7 @@ public abstract class RetailStoreClientImpl implements Runnable {
 	 */
 	public RetailStoreClientImpl(String customerID, String[] args) throws IOException {
 		this.customerID = customerID;
-		String storeCode = customerID.toCharArray()[0] + ""; // cast to String
+		String storeCode = customerID.toCharArray()[0] + "0"; // cast to String
 		
 		initORB(storeCode, args);
 	}
@@ -76,7 +77,7 @@ public abstract class RetailStoreClientImpl implements Runnable {
 		props.setProperty("org.omg.CORBA.ORBClass", "com.sun.corba.se.internal.POA.POAORB");
 		props.setProperty("org.omg.CORBA.ORBSingletonClass", "com.sun.corba.se.internal.corba.ORBSingleton");
 		props.setProperty("org.omg.CORBA.ORBInitialPort", "1050");
-        props.setProperty("org.omg.CORBA.ORBInitialHost", "north");
+        props.setProperty("org.omg.CORBA.ORBInitialHost", Config.FRONT_END_NAME);
 
 		// Initialize the ORB
 		orb = org.omg.CORBA.ORB.init((String[])args, props);
