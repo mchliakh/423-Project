@@ -5,6 +5,8 @@ public abstract class FIFOObjectUDPServlet<T> extends FIFOObjectUDP implements R
 	
 	public FIFOObjectUDPServlet(int port, T owner) {
 		super(port);
+		addProcess(2);
+		addProcess(3);
 		this.owner = owner;
 	}
 	

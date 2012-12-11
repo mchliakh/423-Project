@@ -394,7 +394,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 				break;
 		}
 		resp.setId(req.getId());
-		udp.send(groupMap.get(getLeaderId()).getHost(), Config.DISPATCH_OUT_PORT, resp);
+		udp.send(groupMap.get(getLeaderId()).getHost(), Config.DISPATCH_IN_PORT, resp);
 	}
 	
 		public String getStoreCode() {
@@ -476,7 +476,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 	public void broadcast(BasicPacket req) {
 		System.out.println("Attemping to broadcast " + ((StatusPacket) req).getStatus());
 		for (GroupMember member : groupMap.values()) {
-			if (member.isAlive()) { udp.FIFOSend(member.getHost(), Config.DISPATCH_OUT_PORT, req, id); }
+			if (member.isAlive()) { udp.FIFOSend(member.getHost(), Config.DISPATCH_IN_PORT, req, id); }
 		}
 	}
 //	
