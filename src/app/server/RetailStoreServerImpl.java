@@ -3,6 +3,7 @@ package app.server;
 
 import java.util.*;
 import java.io.*;
+
 import packet.BasicPacket;
 import packet.StatusPacket;
 import udp.FIFOObjectUDP;
@@ -35,6 +36,11 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		
 		public GroupMember(String host) {
 			this.host = host;
+		}
+		
+		public GroupMember(String host, boolean isLeader) {
+			this(host);
+			this.isLeader = isLeader;
 		}
 		
 		public String getHost() {
@@ -100,12 +106,12 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		
 		// build group map
 		//groupMap.put(1, new GroupMember("nurse"));
-		groupMap.put(2, new GroupMember("noyori"));
-		groupMap.put(3, new GroupMember("north"));
+		groupMap.put(2, new GroupMember("localhost"));
+		groupMap.put(3, new GroupMember("localhost", true));
 		
 		// launch dispatch server
 		if (!isLeader) { // only if not the leader
-			dispatchServer = new Thread(new DispatchServlet(Config.DISPATCH_IN_PORT, this));
+			dispatchServer = new Thread(new DispatchServlet(4446, this));
 			dispatchServer.start();
 		} else {
 			udp = new FIFOObjectUDP(Config.DISPATCH_IN_PORT);
@@ -132,12 +138,12 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		req.setId(counter++);
 		broadcast(req);
 		int responseId = -2;
-		Response resp = null;
+		Object resp = null;
 		while (responseId != counter-1) {
-			resp = (Response) udp.receive();
-			responseId = resp.getId();
+			//resp = udp.receive();
+			//responseId = ((Response) resp).getId();
 		}
-		switch ((ReturnStatus) resp.getStatus()) {
+		switch ((ReturnStatus) ((Response) resp).getStatus()) {
 			case SUCCESS:
 				// return
 				break;
@@ -414,7 +420,19 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 	}
 	
 	private synchronized void recordTransaction(String customerID, int itemID, int numberOfItem) throws FileNotFoundException {
-		PrintWriter outputStream = new PrintWriter(new FileOutputStream(getStoreCode() + "\\" + customerID + ".txt", true));
+		File file = new File("/Users/robert/Documents/workspace/423-Project/data/m"); // + getStoreCode() + "_" + customerID + ".txt");
+		
+		// if file doesnt exists, then create it
+		if (!file.exists()) {
+			try {
+				file.createNewFile();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		PrintWriter outputStream = new PrintWriter(new FileOutputStream(file, true));
 		outputStream.println(customerID + "," + itemID + "," + numberOfItem);
 		outputStream.close();
 	}
@@ -476,7 +494,9 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 	public void broadcast(BasicPacket req) {
 		System.out.println("Attemping to broadcast " + ((StatusPacket) req).getStatus());
 		for (GroupMember member : groupMap.values()) {
-			if (member.isAlive()) { udp.FIFOSend(member.getHost(), Config.DISPATCH_IN_PORT, req, id); }
+			if (!member.isLeader() && member.isAlive()) { 
+				udp.FIFOSend(member.getHost(), 4446, req, id);
+			}
 		}
 	}
 //	

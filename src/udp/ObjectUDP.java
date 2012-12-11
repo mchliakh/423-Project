@@ -14,11 +14,14 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 
+import udp.FIFOObjectUDP.Message;
+
 public class ObjectUDP {
-        private final int BUFFER_SIZE = 256;
+        private final int BUFFER_SIZE = 256*16;
 
         private DatagramSocket socket;
 
+        public ObjectUDP() {}
         public ObjectUDP(int port) {
 	        try {
                 this.socket = new DatagramSocket(port);
@@ -31,6 +34,7 @@ public class ObjectUDP {
         public void send(String host, int port, Serializable obj) {
         	try {
             // marshal the object
+
             ByteArrayOutputStream bStream = new ByteArrayOutputStream();
             ObjectOutput oo = new ObjectOutputStream(bStream);
             oo.writeObject(obj);

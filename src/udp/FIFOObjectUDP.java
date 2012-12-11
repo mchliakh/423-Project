@@ -4,12 +4,13 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Iterator;
+import udp.FIFOObjectUDP.Message;
 
 public class FIFOObjectUDP extends ObjectUDP implements Serializable {
 	
 	private static final long serialVersionUID = -5234768430440092486L;
 
-	private class Message implements Serializable {
+	public class Message implements Serializable {
 
 		private static final long serialVersionUID = -6214114249577926570L;
 		
@@ -17,6 +18,9 @@ public class FIFOObjectUDP extends ObjectUDP implements Serializable {
 		private int senderID;
 		private Serializable obj;
 		
+		public Message() {
+			
+		}
 		public Message(int sequenceNumber, int senderID, Serializable obj) {
 			this.sequenceNumber = sequenceNumber;
 			this.senderID = senderID;
@@ -36,16 +40,20 @@ public class FIFOObjectUDP extends ObjectUDP implements Serializable {
 		}
 	}
 	
-	private int counter = 0;
+	private int counter = 1;
 	private Hashtable<Integer, Object[]> processes = new Hashtable<Integer, Object[]>();	
 
+	public FIFOObjectUDP() {
+	
+	}
+	
 	public FIFOObjectUDP(int port) {
 		super(port);		
 	}
 	
 	public void addProcess(int id) {
 		Object[] queue = new Object[1000];
-		queue[0] = 0; //counter
+		queue[0] = 1; //counter
 		processes.put(id, queue);		
 	}
 	
