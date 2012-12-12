@@ -110,7 +110,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		}
 		
 		// build group map
-		//groupMap.put(1, new GroupMember(Config.SLAVE1_NAME));
+		groupMap.put(1, new GroupMember(Config.SLAVE1_NAME));
 		groupMap.put(2, new GroupMember(Config.SLAVE2_NAME));
 		groupMap.put(3, new GroupMember(Config.LEADER_NAME, true));
 		
@@ -123,6 +123,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 			dispatchServer.start();
 			
 			FailureDetectorObjectUDPServer fd = new FailureDetectorObjectUDPServer(Config.IM_ALIVE_PORT, this);
+			fd.addServer(1);
 			fd.addServer(2);
 			fd.addServer(3);
 			failureDetectionServer = new Thread(fd);
@@ -133,6 +134,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 			udpFIFOSender  = new FIFOObjectUDP(Config.SLAVES_UDP_SENDER_PORT + 11);
 			
 			FailureDetectorObjectUDPServer fd = new FailureDetectorObjectUDPServer(Config.IM_ALIVE_PORT2, this);
+			fd.addServer(1);
 			fd.addServer(2);
 			fd.addServer(3);
 			failureDetectionServer = new Thread(fd);

@@ -30,5 +30,6 @@ public class Config {
  * Change DATA_FOLDER
  * Change FRONT_END_NAME, SLAVE1_NAME, SLAVE2_NAME, LEADER_NAME
  * Create folder data in workspace
+ * Check FIFOObjectUDPServlet has all three processes
  * */
         
