@@ -505,7 +505,8 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 	public void broadcast(BasicPacket req) {
 		System.out.println("Attemping to broadcast " + ((StatusPacket) req).getStatus());
 		for (GroupMember member : groupMap.values()) {
-			if (!member.isLeader() && member.isAlive()) { 
+			if (!member.isLeader() && member.isAlive()) {
+				LiteLogger.log(member.getHost(), Config.SLAVES_LISTEN_PORT, req.getId(), id);
 				udp.FIFOSend(member.getHost(), Config.SLAVES_LISTEN_PORT, req, id);
 			}
 		}
