@@ -57,11 +57,13 @@ public class FailureDetectorObjectUDPServer extends FIFOObjectUDPServlet<RetailS
 					Date date			= new java.util.Date();
 					Timestamp timestamp = new Timestamp(date.getTime());
 					
+					LiteLogger.log("timestamp = ", timestamp, "s.timestamp = ", s.timestamp, " compare = ", timestamp.compareTo(s.getTimestamp()));
 					if (timestamp.compareTo(s.getTimestamp()) >  INTERVAL) {
 						s.increaseAttempts();
 						LiteLogger.log("increasing attempt for id=", s.id, " attempts =", s.attempts);
 						
 						if (s.hasFailed()) {
+							LiteLogger.log(s.toString(), "has failed, what a noob");
 							GroupMember groupMember = getOwner().getGroupMap().get(s.getId());						
 							groupMember.setToFailed();
 							if (groupMember.isLeader()) {
