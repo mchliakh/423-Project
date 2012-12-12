@@ -8,13 +8,13 @@ public class Config {
 	public static int SLAVES_LISTEN_PORT = 4445;
 	public static int SLAVES_UDP_SENDER_PORT = 4446; //Patch
 	
-	public static String FRONT_END_NAME = "localhost";
+	public static String FRONT_END_NAME = "taos";
 	public static String SLAVE1_NAME = "localhost";
-	public static String SLAVE2_NAME = "localhost";
-	public static String LEADER_NAME = "localhost";
+	public static String SLAVE2_NAME = "tano";
+	public static String LEADER_NAME = "taos";
 	
 	public static boolean IS_DEBUG = true;
-	public static String DATA_FOLDER = "/nfs/home/r/r_jakubo/workspace/data/";
+	public static String DATA_FOLDER = System.getProperty( "user.home" ) + "/workspace/data/";
 }
 
 /*
@@ -22,5 +22,6 @@ public class Config {
  * Change IS_DEBUG to false
  * Change DATA_FOLDER
  * Change FRONT_END_NAME, SLAVE1_NAME, SLAVE2_NAME, LEADER_NAME
+ * Create folder data in workspace
  * */
         
