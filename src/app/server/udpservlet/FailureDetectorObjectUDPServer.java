@@ -113,10 +113,10 @@ public class FailureDetectorObjectUDPServer extends FIFOObjectUDPServlet<RetailS
 				AliveRequest request = new AliveRequest();
 				request.setId(getOwner().getId());
 				if (getOwner().getLeader()) {
-					getOwner().broadcast(request, Config.IM_ALIVE_PORT);
+					getOwner().broadcastAll(request, Config.IM_ALIVE_PORT);
 				}
 				else {
-					getOwner().broadcast(request, Config.IM_ALIVE_PORT2);
+					getOwner().broadcastAll(request, Config.IM_ALIVE_PORT2);
 				}
 				start = System.currentTimeMillis();
 			}

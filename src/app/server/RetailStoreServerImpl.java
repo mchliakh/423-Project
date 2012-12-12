@@ -549,6 +549,18 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 			}
 		}
 	}
+	
+	public void broadcastAll(BasicPacket req, int port) {
+		//System.out.println("Attemping to broadcast " + ((StatusPacket) req).getStatus());
+		LiteLogger.log("Attempting to broadcast...");
+		for (GroupMember member : groupMap.values()) {
+			if (member.isAlive()) {
+				LiteLogger.log(member.getHost(), port, req.getId(), id);
+				udpFIFOSender.FIFOSend(member.getHost(), port, req, req.getId(), id);
+				
+			}
+		}
+	}
 //	
 //	public void broadcastHigherId(BasicPacket req) {
 //		for (int i = id + 1; i != groupMap.size(); i++) {
