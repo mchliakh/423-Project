@@ -74,7 +74,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 	private Thread dispatchServer;
 	
 	private int id;
-	private int counter = 0;
+	private int counter = 1;
 	
 	private boolean isLeader = false;
 	
@@ -108,7 +108,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		}
 		
 		// build group map
-		groupMap.put(1, new GroupMember(Config.SLAVE1_NAME);
+		groupMap.put(1, new GroupMember(Config.SLAVE1_NAME));
 		groupMap.put(2, new GroupMember(Config.SLAVE2_NAME));
 		groupMap.put(3, new GroupMember(Config.LEADER_NAME, true));
 		
