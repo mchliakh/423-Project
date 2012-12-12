@@ -9,7 +9,7 @@ public class Config {
 	public static int SLAVES_UDP_SENDER_PORT = 4446; //Patch
 	
 	public static String FRONT_END_NAME = "taos";
-	public static String SLAVE1_NAME = "localhost";
+	public static String SLAVE1_NAME = "tewa";
 	public static String SLAVE2_NAME = "tano";
 	public static String LEADER_NAME = "taos";
 	
