@@ -49,7 +49,11 @@ public class FailureDetectorObjectUDPServer extends FIFOObjectUDPServlet<RetailS
 				LiteLogger.log("Host server id = ", getOwner().getId(), "Imalive received.");
 				for (ServerDetails s : servers) {
 					LiteLogger.log(s.toString());
-					if (s.getId() == AliveRequest.class.cast(((Message)obj).getObject()).getId()) { 
+					if (s.getId() == getOwner().getId()) {
+						LiteLogger.log("ServerDetails id = ", s.getId(), "is same as owner ", getOwner().getId());
+						continue;
+					}					
+					else if (s.getId() == AliveRequest.class.cast(((Message)obj).getObject()).getId()) { 
 						LiteLogger.log("Imalive received from",  AliveRequest.class.cast(((Message)obj).getObject()).getId());
 						s.resetAttempts();
 						continue;
