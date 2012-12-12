@@ -52,6 +52,7 @@ public class FailureDetectorObjectUDPServer extends FIFOObjectUDPServlet<RetailS
 					if (s.getId() == AliveRequest.class.cast(((Message)obj).getObject()).getId()) { 
 						LiteLogger.log("Imalive received from",  AliveRequest.class.cast(((Message)obj).getObject()).getId());
 						s.resetAttempts();
+						continue;
 					}
 									
 					Date date			= new java.util.Date();
