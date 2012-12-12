@@ -108,19 +108,19 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		}
 		
 		// build group map
-		//groupMap.put(1, new GroupMember("nurse"));
-		groupMap.put(2, new GroupMember("localhost"));
-		groupMap.put(3, new GroupMember("localhost", true));
+		//groupMap.put(1, new GroupMember(Config.SLAVE1_NAME);
+		groupMap.put(2, new GroupMember(Config.SLAVE2_NAME));
+		groupMap.put(3, new GroupMember(Config.LEADER_NAME, true));
 		
 		// launch dispatch server
 		if (!isLeader) { // only if not the leader
 			LiteLogger.log("Creating Slave for id", id);			
-			dispatchServer = new Thread(new DispatchServlet(4446, this));
-			udpSender = new ObjectUDP(Config.DISPATCH_IN_PORT - 1);
+			dispatchServer = new Thread(new DispatchServlet(Config.SLAVES_LISTEN_PORT, this));
+			udpSender = new ObjectUDP(Config.SLAVES_UDP_SENDER_PORT);
 			dispatchServer.start();
 		} else {
 			LiteLogger.log("Creating Leader for id", id);
-			udp = new FIFOObjectUDP(Config.DISPATCH_IN_PORT);
+			udp = new FIFOObjectUDP(Config.LEADER_LISTEN_PORT);
 		}
 		
 		 // seed inventory with random stock
@@ -411,7 +411,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		resp.setId(req.getId());
 		
 		LiteLogger.log("Dispatching udp:", "host=", groupMap.get(getLeaderId()).getHost(), "resp=", resp);
-		udpSender.send(groupMap.get(getLeaderId()).getHost(), 4445, resp);
+		udpSender.send(groupMap.get(getLeaderId()).getHost(), Config.LEADER_LISTEN_PORT, resp);
 	}
 	
 		public String getStoreCode() {
@@ -506,7 +506,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		System.out.println("Attemping to broadcast " + ((StatusPacket) req).getStatus());
 		for (GroupMember member : groupMap.values()) {
 			if (!member.isLeader() && member.isAlive()) { 
-				udp.FIFOSend(member.getHost(), 4446, req, id);
+				udp.FIFOSend(member.getHost(), Config.SLAVES_LISTEN_PORT, req, id);
 			}
 		}
 	}
