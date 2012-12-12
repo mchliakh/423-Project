@@ -1,9 +1,8 @@
 package app.server;
 
 public class Config {	
-	public static int ELECTION_IN_PORT = 4447;
-//	public static int ELECTION_OUT_PORT = 4448;
-	
+	public static int ELECTION_LISTEN_PORT = 4450;
+
 	public static int LEADER_LISTEN_PORT = 4445;
 	public static int SLAVES_LISTEN_PORT = 4446;
 	public static int SLAVES_UDP_SENDER_PORT = 4447; //Patch

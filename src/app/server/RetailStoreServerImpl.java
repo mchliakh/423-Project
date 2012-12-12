@@ -74,6 +74,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 	
 	private Thread dispatchServer;
 	private Thread failureDetectionServer;
+	private Thread electionReceiveServer;
 	
 	private int id;
 	private int counter = 1;
@@ -141,6 +142,8 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 			failureDetectionServer.start();
 		}
 		
+		electionReceiveServer = new Thread(new ElectionReceiveServlet(Config.ELECTION_LISTEN_PORT, this));
+		electionReceiveServer.start();
 		 // seed inventory with random stock
 //		 Random generator = new Random();
 //		 for (int i = 0; i < INVENTORY_SIZE; i++) {
@@ -518,14 +521,15 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 	public boolean getLeader() { return isLeader; }
 	public  HashMap<Integer, GroupMember> getGroupMap() { return groupMap; }
 	
-//	public ElectionState getElectionState() {
-//		return electionState;
-//	}
-//
-//	public void setElectionState(ElectionState electionState) {
-//		this.electionState = electionState;
-//	}
-//	
+	public ElectionState getElectionState() {
+		return electionState;
+	}
+
+	public void setElectionState(ElectionState electionState) {
+		LiteLogger.log("Setting election state to:", electionState);
+		this.electionState = electionState;
+	}
+	
 	public void broadcast(BasicPacket req) {
 		//System.out.println("Attemping to broadcast " + ((StatusPacket) req).getStatus());
 		LiteLogger.log("Attempting to broadcast...");
@@ -568,15 +572,15 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 //		}
 //	}
 //
-//	public void setLeaderId(int leaderId) {
-//		if (leaderId == id) {
-//			isLeader = true;
-//		}
-//		
-//		for (int i = 1; i <= groupMap.size(); i++) {
-//			groupMap.get(i).setIsLeader(false);					
-//		}	
-//		
-//		groupMap.get(leaderId).setIsLeader(true);
-//	}
+	public void setLeaderId(int leaderId) {
+		if (leaderId == id) {
+			isLeader = true;
+		}
+		
+		for (int i = 1; i <= groupMap.size(); i++) {
+			groupMap.get(i).setIsLeader(false);					
+		}	
+		
+		groupMap.get(leaderId).setIsLeader(true);
+	}
 }
