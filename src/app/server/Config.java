@@ -11,4 +11,7 @@ public class Config {
 	public static String SERVER1_NAME = "localhost";
 	public static String SERVER2_NAME = "localhost";
 	public static String LEADER_NAME = "localhost";
+	
+	public static boolean IS_DEBUG = true;
+	public static String DATA_FOLDER = "/nfs/home/r/r_jakubo/workspace/data/";
 }

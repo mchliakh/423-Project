@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Iterator;
 import udp.FIFOObjectUDP.Message;
+import utils.LiteLogger;
 
 public class FIFOObjectUDP extends ObjectUDP implements Serializable {
 	
@@ -68,19 +69,23 @@ public class FIFOObjectUDP extends ObjectUDP implements Serializable {
 		for (Object[] queue : processes.values()) {
 			int counter    = (Integer)queue[0];
 			Object message = queue[counter];
+			
+			LiteLogger.log("Checking undispatched messages.", "Counter=", counter, "Queue=", queue[counter]);
 			if (message != null) {
+				LiteLogger.log("Message wasnt null:", message);
 				queue[counter] = (Object)(counter + 1);
 				return message;
 			}
 		}
-		
+				
 		//wait on receive 
 		Object result = null;			
 		while (result == null) {
+			LiteLogger.log("\nFIFOReceive() waiting ...");
 			Message message = (Message) super.receive();
-			
+			LiteLogger.log("Received messaged from", message.getSenderID());
 			if (processes.containsKey(message.getSenderID())) {
-				System.out.println(message.sequenceNumber);
+				LiteLogger.log("Sequence Number=", message.sequenceNumber);
 				Object[] queue = processes.get(message.getSenderID());
 				queue[message.getSequenceNumber()] = message.getObject();
 				

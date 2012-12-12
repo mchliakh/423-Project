@@ -7,6 +7,7 @@ import java.io.*;
 import packet.BasicPacket;
 import packet.StatusPacket;
 import udp.FIFOObjectUDP;
+import udp.ObjectUDP;
 import app.orb.RetailStorePackage.InsufficientQuantity;
 import app.orb.RetailStorePackage.InvalidReturn;
 import app.orb.RetailStorePackage.NoSuchItem;
@@ -14,6 +15,7 @@ import app.server.request.*;
 import app.server.response.Response;
 import app.server.response.ReturnStatus;
 import app.server.udpservlet.*;
+import utils.LiteLogger;
 
 public class RetailStoreServerImpl extends RetailStoreServer {
 	private final int INVENTORY_SIZE = 10;
@@ -28,6 +30,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 	private HashMap<Integer, GroupMember> groupMap = new HashMap<Integer, GroupMember>();
 	
 	private FIFOObjectUDP udp;
+	private ObjectUDP udpSender;
 	
 	public class GroupMember {
 		private String host;
@@ -111,9 +114,12 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		
 		// launch dispatch server
 		if (!isLeader) { // only if not the leader
+			LiteLogger.log("Creating Slave for id", id);			
 			dispatchServer = new Thread(new DispatchServlet(4446, this));
+			udpSender = new ObjectUDP(Config.DISPATCH_IN_PORT - 1);
 			dispatchServer.start();
 		} else {
+			LiteLogger.log("Creating Leader for id", id);
 			udp = new FIFOObjectUDP(Config.DISPATCH_IN_PORT);
 		}
 		
@@ -140,8 +146,10 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		int responseId = -2;
 		Object resp = null;
 		while (responseId != counter-1) {
-			//resp = udp.receive();
-			//responseId = ((Response) resp).getId();
+			LiteLogger.log("\nLeader is waiting to receive answer ...\n");
+			resp = udp.receive();
+			LiteLogger.log("\nThe almighty has received an answer ...\n");
+			responseId = ((Response) resp).getId();
 		}
 		switch ((ReturnStatus) ((Response) resp).getStatus()) {
 			case SUCCESS:
@@ -399,8 +407,11 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 			default:
 				break;
 		}
+		LiteLogger.log("Setting response id to:", req.getId());
 		resp.setId(req.getId());
-		udp.send(groupMap.get(getLeaderId()).getHost(), Config.DISPATCH_IN_PORT, resp);
+		
+		LiteLogger.log("Dispatching udp:", "host=", groupMap.get(getLeaderId()).getHost(), "resp=", resp);
+		udpSender.send(groupMap.get(getLeaderId()).getHost(), 4445, resp);
 	}
 	
 		public String getStoreCode() {
@@ -420,7 +431,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 	}
 	
 	private synchronized void recordTransaction(String customerID, int itemID, int numberOfItem) throws FileNotFoundException {
-		File file = new File("/Users/robert/Documents/workspace/423-Project/data/m"); // + getStoreCode() + "_" + customerID + ".txt");
+		File file = new File(Config.DATA_FOLDER + customerID); // + getStoreCode() + "_" + customerID + ".txt");
 		
 		// if file doesnt exists, then create it
 		if (!file.exists()) {
