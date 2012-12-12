@@ -58,20 +58,22 @@ public class FailureDetectorObjectUDPServer extends FIFOObjectUDPServlet<RetailS
 					Timestamp timestamp = new Timestamp(date.getTime());
 					
 					LiteLogger.log("timestamp = ", timestamp, "s.timestamp = ", s.timestamp, " compare = ", timestamp.compareTo(s.getTimestamp()));
-					if (timestamp.compareTo(s.getTimestamp()) >  INTERVAL) {
-						s.increaseAttempts();
-						LiteLogger.log("increasing attempt for id=", s.id, " attempts =", s.attempts);
-						
-						if (s.hasFailed()) {
-							LiteLogger.log(s.toString(), "has failed, what a noob");
-							GroupMember groupMember = getOwner().getGroupMap().get(s.getId());						
-							groupMember.setToFailed();
-							if (groupMember.isLeader()) {
-								LiteLogger.log(getOwner().getId(), " is starting a new election!!!!");
-								//(new Thread(new ElectionServlet(Config.ELECTION_IN_PORT, getOwner()))).start(); 			
+					if (timestamp.compareTo(s.getTimestamp()) >  0) {
+						if (timestamp.getTime() - s.getTimestamp().getTime() > INTERVAL) {
+							s.increaseAttempts();
+							LiteLogger.log("increasing attempt for id=", s.id, " attempts =", s.attempts);
+							
+							if (s.hasFailed()) {
+								LiteLogger.log(s.toString(), "has failed, what a noob");
+								GroupMember groupMember = getOwner().getGroupMap().get(s.getId());						
+								groupMember.setToFailed();
+								if (groupMember.isLeader()) {
+									LiteLogger.log(getOwner().getId(), " is starting a new election!!!!");
+									//(new Thread(new ElectionServlet(Config.ELECTION_IN_PORT, getOwner()))).start(); 			
+								}
 							}
-						}
-					}
+						} //end timestamp difference
+					} //end timestamp compare
 				}
 							
 			} //end while
