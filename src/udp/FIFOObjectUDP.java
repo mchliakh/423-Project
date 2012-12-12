@@ -41,7 +41,7 @@ public class FIFOObjectUDP extends ObjectUDP implements Serializable {
 		}
 	}
 	
-	private int counter = 1;
+	//private int counter = 1;
 	private Hashtable<Integer, Object[]> processes = new Hashtable<Integer, Object[]>();	
 
 	public FIFOObjectUDP() {
@@ -58,8 +58,8 @@ public class FIFOObjectUDP extends ObjectUDP implements Serializable {
 		processes.put(id, queue);		
 	}
 	
-	public void FIFOSend(String host, int port, Serializable obj, int senderID) {
-		Message message = new Message(counter++, senderID, obj);
+	public void FIFOSend(String host, int port, Serializable obj, int reqid, int senderID) {
+		Message message = new Message(reqid, senderID, obj);
 		super.send(host, port, message);
 	}
 	

@@ -140,9 +140,13 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 	@Override
 	public void purchaseItem(String customerID, int itemID, int numberOfItem) throws NoSuchItem, InsufficientQuantity {
 		System.out.println("Received \"purchaseItem\", broadcating.");
+		
 		PurchaseItem req = new PurchaseItem(customerID, itemID, numberOfItem);
-		req.setId(counter++);
+		req.setId(counter);		
+		counter += 1;
+		
 		broadcast(req);
+		
 		int responseId = -2;
 		Object resp = null;
 		while (responseId != counter-1) {
@@ -507,7 +511,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		for (GroupMember member : groupMap.values()) {
 			if (!member.isLeader() && member.isAlive()) {
 				LiteLogger.log(member.getHost(), Config.SLAVES_LISTEN_PORT, req.getId(), id);
-				udp.FIFOSend(member.getHost(), Config.SLAVES_LISTEN_PORT, req, id);
+				udp.FIFOSend(member.getHost(), Config.SLAVES_LISTEN_PORT, req, req.getId(), id);
 			}
 		}
 	}
