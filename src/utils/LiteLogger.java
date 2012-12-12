@@ -21,6 +21,7 @@ public class LiteLogger {
 					System.out.print(param.toString() + " " );					
 				}
 			}
+			System.out.println();
 		}
 	}
 }
