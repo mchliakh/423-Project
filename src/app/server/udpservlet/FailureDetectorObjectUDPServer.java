@@ -59,6 +59,8 @@ public class FailureDetectorObjectUDPServer extends FIFOObjectUDPServlet<RetailS
 					
 					if (timestamp.compareTo(s.getTimestamp()) >  INTERVAL) {
 						s.increaseAttempts();
+						LiteLogger.log("increasing attempt for id=", s.id, " attempts =", s.attempts);
+						
 						if (s.hasFailed()) {
 							GroupMember groupMember = getOwner().getGroupMap().get(s.getId());						
 							groupMember.setToFailed();
