@@ -81,7 +81,7 @@ public class FailureDetectorObjectUDPServer extends FIFOObjectUDPServlet<RetailS
 								groupMember.setToFailed();
 								if (groupMember.isLeader()) {
 									LiteLogger.log(getOwner().getId(), " is starting a new election!!!!");
-									//(new Thread(new ElectionServlet(Config.ELECTION_IN_PORT, getOwner()))).start(); 			
+									(new Thread(new ElectionServlet(Config.ELECTION_LISTEN_PORT, getOwner()))).start(); 			
 								}
 							}
 						} //end timestamp difference
@@ -127,12 +127,6 @@ public class FailureDetectorObjectUDPServer extends FIFOObjectUDPServlet<RetailS
 				AliveRequest request = new AliveRequest();
 				request.setId(getOwner().getId());
 				getOwner().broadcastAll(request, Config.IM_ALIVE_PORT);
-//				if (getOwner().getLeader()) {
-//					getOwner().broadcastAll(request, Config.IM_ALIVE_PORT);
-//				}
-//				else {
-//					getOwner().broadcastAll(request, Config.IM_ALIVE_PORT2);
-//				}
 				start = System.currentTimeMillis();
 			}
 			
