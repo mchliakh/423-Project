@@ -18,6 +18,7 @@ public class RetailStoreClientImplDriver3 extends RetailStoreClientImpl {
 				System.out.println("Attempting to purchase 1 of 1000");
 				purchaseItem(1000, 1); // should succeed
 				Thread.sleep(1000);
+				returnItem(1000, 1); // should succeed
 			}		
 		} catch (NoSuchItem e) {
 			System.err.println(getCustomerID() + ": The requested item does not exist!");

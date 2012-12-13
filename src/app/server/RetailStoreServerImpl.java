@@ -127,23 +127,10 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 			udpFIFOSender  = new FIFOObjectUDP(Config.SLAVES_UDP_SENDER_PORT + 10);
 			dispatchServer.start();
 			
-//			FailureDetectorObjectUDPServer fd = new FailureDetectorObjectUDPServer(Config.IM_ALIVE_PORT, this);
-//			fd.addServer(1);
-//			fd.addServer(2);
-//			fd.addServer(3);
-//			failureDetectionServer = new Thread(fd);
-//			failureDetectionServer.start();
 		} else {
 			LiteLogger.log("Creating Leader for id", id);
 			udp = new FIFOObjectUDP(Config.LEADER_LISTEN_PORT);
 			udpFIFOSender  = new FIFOObjectUDP(Config.SLAVES_UDP_SENDER_PORT + 11);
-			
-//			FailureDetectorObjectUDPServer fd = new FailureDetectorObjectUDPServer(Config.IM_ALIVE_PORT, this);
-//			fd.addServer(1);
-//			fd.addServer(2);
-//			fd.addServer(3);
-//			failureDetectionServer = new Thread(fd);
-//			failureDetectionServer.start();
 		}
 		
 		FailureDetectorObjectUDPServer fd = new FailureDetectorObjectUDPServer(Config.IM_ALIVE_PORT, this);
@@ -455,8 +442,8 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		udpSender.send(groupMap.get(getLeaderId()).getHost(), Config.LEADER_LISTEN_PORT, resp);
 	}
 	
-		public String getStoreCode() {
-		return getStoreCode();
+	public String getStoreCode() {
+		return super.getStoreCode();
 	}
 	
 	public String getInventory() {
@@ -494,9 +481,9 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		
 		try
 		{
-			inputStream = new Scanner(new FileInputStream(getStoreCode() + "\\" + customerID + ".txt"));
+			inputStream = new Scanner(new FileInputStream(Config.DATA_FOLDER + customerID));
 		} catch (FileNotFoundException e) {
-			
+			System.out.println(e.getMessage() + "\n" + e.getStackTrace());
 		}
 		
 		String line;
