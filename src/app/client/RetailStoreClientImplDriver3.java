@@ -14,7 +14,7 @@ public class RetailStoreClientImplDriver3 extends RetailStoreClientImpl {
 	
 	public void run() {
 		try {
-			for (int i = 0; i != 5; i++) {
+			for (int i = 0; i != 1; i++) {
 				System.out.println("Attempting to purchase 1 of 1000");
 				purchaseItem(1000, 1); // should succeed
 				Thread.sleep(1000);

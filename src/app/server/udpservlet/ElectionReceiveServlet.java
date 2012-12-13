@@ -25,7 +25,7 @@ public class ElectionReceiveServlet extends FIFOObjectUDPServlet<RetailStoreServ
 			Object packet;
 			try {
 
-				getOwner().setElectionState(ElectionState.WAIT_FOR_REPLY); //TODO: to remove, for testing only
+//				getOwner().setElectionState(ElectionState.WAIT_FOR_REPLY); //TODO: to remove, for testing only
 				packet = receiveWithTimeout(timeout);
 				
 				/*if (packet instanceof ElectionPacket) {
@@ -58,7 +58,7 @@ public class ElectionReceiveServlet extends FIFOObjectUDPServlet<RetailStoreServ
 					getOwner().setElectionState(ElectionState.IDLE);
 				}
 				else if (getOwner().getElectionState() == ElectionState.WAIT_FOR_LEADER) {
-					//(new Thread(new ElectionServlet(Config.ELECTION_IN_PORT, getOwner()))).start();					
+					//(new Thread(new ElectionServlet(Config.ELECTION_LISTEN_PORT, getOwner()))).start();					
 				}
 			}							
 		}

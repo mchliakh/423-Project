@@ -123,26 +123,33 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 			udpFIFOSender  = new FIFOObjectUDP(Config.SLAVES_UDP_SENDER_PORT + 10);
 			dispatchServer.start();
 			
-			FailureDetectorObjectUDPServer fd = new FailureDetectorObjectUDPServer(Config.IM_ALIVE_PORT, this);
-			fd.addServer(1);
-			fd.addServer(2);
-			fd.addServer(3);
-			failureDetectionServer = new Thread(fd);
-			failureDetectionServer.start();
+//			FailureDetectorObjectUDPServer fd = new FailureDetectorObjectUDPServer(Config.IM_ALIVE_PORT, this);
+//			fd.addServer(1);
+//			fd.addServer(2);
+//			fd.addServer(3);
+//			failureDetectionServer = new Thread(fd);
+//			failureDetectionServer.start();
 		} else {
 			LiteLogger.log("Creating Leader for id", id);
 			udp = new FIFOObjectUDP(Config.LEADER_LISTEN_PORT);
 			udpFIFOSender  = new FIFOObjectUDP(Config.SLAVES_UDP_SENDER_PORT + 11);
 			
-			FailureDetectorObjectUDPServer fd = new FailureDetectorObjectUDPServer(Config.IM_ALIVE_PORT2, this);
-			fd.addServer(1);
-			fd.addServer(2);
-			fd.addServer(3);
-			failureDetectionServer = new Thread(fd);
-			failureDetectionServer.start();
+//			FailureDetectorObjectUDPServer fd = new FailureDetectorObjectUDPServer(Config.IM_ALIVE_PORT, this);
+//			fd.addServer(1);
+//			fd.addServer(2);
+//			fd.addServer(3);
+//			failureDetectionServer = new Thread(fd);
+//			failureDetectionServer.start();
 		}
 		
-		electionReceiveServer = new Thread(new ElectionReceiveServlet(Config.ELECTION_LISTEN_PORT, this));
+		FailureDetectorObjectUDPServer fd = new FailureDetectorObjectUDPServer(Config.IM_ALIVE_PORT, this);
+		fd.addServer(1);
+		fd.addServer(2);
+		fd.addServer(3);
+		failureDetectionServer = new Thread(fd);
+		failureDetectionServer.start();
+		
+		electionReceiveServer = new Thread(new ElectionReceiveServlet(Config.ELECTION_RECEIVE_LISTEN_PORT, this));
 		electionReceiveServer.start();
 		 // seed inventory with random stock
 //		 Random generator = new Random();

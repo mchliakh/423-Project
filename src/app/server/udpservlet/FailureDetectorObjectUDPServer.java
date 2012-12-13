@@ -43,6 +43,13 @@ public class FailureDetectorObjectUDPServer extends FIFOObjectUDPServlet<RetailS
 
 		public void run() {
 			while (true) {
+				try {
+					Thread.sleep(3000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
 				LiteLogger.log("Waiting to receive imalive message...");
 				Object obj = receive();
 				
@@ -119,12 +126,13 @@ public class FailureDetectorObjectUDPServer extends FIFOObjectUDPServlet<RetailS
 			if (end - start > INTERVAL) {
 				AliveRequest request = new AliveRequest();
 				request.setId(getOwner().getId());
-				if (getOwner().getLeader()) {
-					getOwner().broadcastAll(request, Config.IM_ALIVE_PORT);
-				}
-				else {
-					getOwner().broadcastAll(request, Config.IM_ALIVE_PORT2);
-				}
+				getOwner().broadcastAll(request, Config.IM_ALIVE_PORT);
+//				if (getOwner().getLeader()) {
+//					getOwner().broadcastAll(request, Config.IM_ALIVE_PORT);
+//				}
+//				else {
+//					getOwner().broadcastAll(request, Config.IM_ALIVE_PORT2);
+//				}
 				start = System.currentTimeMillis();
 			}
 			

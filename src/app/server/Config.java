@@ -1,18 +1,19 @@
 package app.server;
 
 public class Config {	
-	public static int ELECTION_LISTEN_PORT = 4450;
+	public static int ELECTION_LISTEN_PORT 		   = 4450;
+	public static int ELECTION_RECEIVE_LISTEN_PORT = 4451;
 
-	public static int LEADER_LISTEN_PORT = 4445;
-	public static int SLAVES_LISTEN_PORT = 4446;
+
+	public static int LEADER_LISTEN_PORT 	 = 4445;
+	public static int SLAVES_LISTEN_PORT 	 = 4446;
 	public static int SLAVES_UDP_SENDER_PORT = 4447; //Patch
-	public static int IM_ALIVE_PORT = 4448; //Patch
-	public static int IM_ALIVE_PORT2 = IM_ALIVE_PORT + 1; //Patch
+	public static int IM_ALIVE_PORT 		 = 4448; //Patch
 	
 	public static String FRONT_END_NAME = "comanche";
-	public static String SLAVE1_NAME = "caddo";
-	public static String SLAVE2_NAME = "cherokee";
-	public static String LEADER_NAME = "comanche";
+	public static String SLAVE1_NAME    = "caddo";
+	public static String SLAVE2_NAME    = "cherokee";
+	public static String LEADER_NAME    = "comanche";
 
 //	public static String FRONT_END_NAME = "localhost";
 //	//public static String SLAVE1_NAME = "tewa";
