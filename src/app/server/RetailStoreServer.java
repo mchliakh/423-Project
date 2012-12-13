@@ -13,7 +13,7 @@ import app.orb.RetailStorePackage.InvalidReturn;
 import app.orb.RetailStorePackage.NoSuchItem;
 
 public abstract class RetailStoreServer extends app.orb.RetailStorePOA {
-	public final int MAX_ID = 3;
+	public int MAX_ID = 3;
 	
 	private String storeCode;
 	

@@ -605,6 +605,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		for (int i = 1; i <= groupMap.size(); i++) {
 			groupMap.get(i).setIsLeader(false);					
 		}	
+		MAX_ID = leaderId; //yaya whatever
 		
 		groupMap.get(leaderId).setIsLeader(true);
 	}
