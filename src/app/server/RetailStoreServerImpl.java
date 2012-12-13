@@ -577,6 +577,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 			}
 		}
 	}
+		
 //	
 //	public void broadcastHigherId(BasicPacket req) {
 //		for (int i = id + 1; i != groupMap.size(); i++) {
