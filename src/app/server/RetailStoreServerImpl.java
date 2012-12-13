@@ -519,9 +519,14 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		return id == MAX_ID;
 	}
 	
-	private int getLeaderId() {
-		// TODO!!!
-		return MAX_ID;
+	public int getLeaderId() {
+		for (int i = 1; i <= groupMap.size(); i++) {
+			if (groupMap.containsKey(i)) {
+				if (groupMap.get(i).isLeader) { return i; }				
+			}
+		}
+		
+		return -1; //somethign went terrible wrong
 	}
 	
 	public int getId() { return id; }

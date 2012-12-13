@@ -17,7 +17,7 @@ public class ElectionServlet extends FIFOObjectUDPServlet<RetailStoreServerImpl>
 	@Override
 	public void run() {		
 		LiteLogger.log("Statring ElectionServlet...");
-		if (getOwner().getId() >= getOwner().getGroupMap().size()) {
+		if (getOwner().getId() >= getOwner().getLeaderId() - 1) {
 			LiteLogger.log("id = ",getOwner().getId(), " is the new leader by default");	
 			CoordinatorPacket coordinator = new CoordinatorPacket();
 			coordinator.setLeaderId(getOwner().getId());

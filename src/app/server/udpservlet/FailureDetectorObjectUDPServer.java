@@ -22,7 +22,7 @@ public class FailureDetectorObjectUDPServer extends FIFOObjectUDPServlet<RetailS
 	private class ServerDetails {
 		private int id;
 		private Timestamp timestamp; 
-		private int attempts;
+		private int attempts;		
 		
 		public void resetAttempts()    { attempts = 0; }
 		public void increaseAttempts() { attempts += 1; }
