@@ -29,7 +29,7 @@ public class FailureDetectorObjectUDPServer extends FIFOObjectUDPServlet<RetailS
 		
 		public int getId() 	          { return id; }
 		public Timestamp getTimestamp() { return timestamp; }
-		public boolean hasFailed()      { return attempts > 3; }
+		public boolean hasFailed()      { return attempts > 7; }
 		  
 		public String toString() {
 			return String.format("id = %s, attempts = %d", id, attempts);  

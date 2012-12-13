@@ -2,10 +2,11 @@ package app.server.udpservlet;
 
 import java.net.SocketTimeoutException;
 
+import packet.AnswerPacket;
 import packet.CoordinatorPacket;
+import packet.ElectionPacket;
 import udp.FIFOObjectUDPServlet;
 import utils.LiteLogger;
-import app.server.Config;
 import app.server.RetailStoreServerImpl;
 
 public class ElectionReceiveServlet extends FIFOObjectUDPServlet<RetailStoreServerImpl> {
@@ -28,7 +29,7 @@ public class ElectionReceiveServlet extends FIFOObjectUDPServlet<RetailStoreServ
 //				getOwner().setElectionState(ElectionState.WAIT_FOR_REPLY); //TODO: to remove, for testing only
 				packet = receiveWithTimeout(timeout);
 				
-				/*if (packet instanceof ElectionPacket) {
+				if (packet instanceof ElectionPacket) {
 					ElectionPacket electionPacket = (ElectionPacket)packet;
 					if (getOwner().getElectionState() == ElectionState.IDLE) {
 						AnswerPacket answerPacket = new AnswerPacket();
@@ -41,7 +42,7 @@ public class ElectionReceiveServlet extends FIFOObjectUDPServlet<RetailStoreServ
 				else if (packet instanceof CoordinatorPacket) {					
 					getOwner().setElectionState(ElectionState.IDLE);
 					getOwner().setLeaderId( CoordinatorPacket.class.cast(packet).getLeaderId());
-				}*/
+				}
 				
 			} catch (SocketTimeoutException e) {
 				System.out.println(e.getMessage() + "\n" + e.getStackTrace());
