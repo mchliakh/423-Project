@@ -62,7 +62,7 @@ public class ElectionReceiveServlet extends FIFOObjectUDPServlet<RetailStoreServ
 					coordinator.setLeaderId(getOwner().getId());
 					LiteLogger.log("New coordinator object created. Setting leader to ", getOwner().getId());
 					
-					getOwner().broadcastAll(coordinator, Config.ELECTION_RECEIVE_LISTEN_PORT);
+					getOwner().broadcastAllNonFifo(coordinator, Config.ELECTION_RECEIVE_LISTEN_PORT);
 					getOwner().setLeaderId(getOwner().getId());
 					getOwner().setElectionState(ElectionState.IDLE);
 				}

@@ -21,7 +21,7 @@ public class ElectionServlet extends FIFOObjectUDPServlet<RetailStoreServerImpl>
 			LiteLogger.log("id = ",getOwner().getId(), " is the new leader by default");	
 			CoordinatorPacket coordinator = new CoordinatorPacket();
 			coordinator.setLeaderId(getOwner().getId());
-			getOwner().broadcastAll(coordinator, Config.ELECTION_RECEIVE_LISTEN_PORT);
+			getOwner().broadcastAllNonFifo(coordinator, Config.ELECTION_RECEIVE_LISTEN_PORT);
 			getOwner().setLeaderId(getOwner().getId());
 		}
 		else {
