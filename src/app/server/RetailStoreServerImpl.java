@@ -33,6 +33,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 	private HashMap<Integer, GroupMember> groupMap = new HashMap<Integer, GroupMember>();
 	
 	private FIFOObjectUDP udp;
+	private FIFOObjectUDP udpReElectedLeader; //patch patch patch
 	private ObjectUDP udpSender;
 	private FIFOObjectUDP udpFIFOSender;
 	
@@ -182,7 +183,12 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		Object resp = null;
 		while (responseId != counter-1) {
 			LiteLogger.log("\nLeader is waiting to receive answer ...\n");
-			resp = udp.receive();
+			if (udp != null) {
+				resp = udp.receive();
+			}
+			else {
+				resp = udpReElectedLeader.receive();
+			}
 			LiteLogger.log("\nThe almighty has received an answer ...\n");
 			responseId = ((Response) resp).getId();
 		}
@@ -551,7 +557,12 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		for (GroupMember member : groupMap.values()) {
 			if (!member.isLeader() && member.isAlive()) {
 				LiteLogger.log(member.getHost(), Config.SLAVES_LISTEN_PORT, req.getId(), id);
-				udp.FIFOSend(member.getHost(), Config.SLAVES_LISTEN_PORT, req, req.getId(), id);
+				if (udp != null) {
+					udp.FIFOSend(member.getHost(), Config.SLAVES_LISTEN_PORT, req, req.getId(), id);
+				}
+				else {
+					udpReElectedLeader.FIFOSend(member.getHost(), Config.SLAVES_LISTEN_PORT, req, req.getId(), id);
+				}
 				
 			}
 		}
@@ -603,13 +614,14 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 	public void setLeaderId(int leaderId) {
 		if (leaderId == id) {
 			isLeader = true;
+			if (udpReElectedLeader == null ) { udpReElectedLeader = new FIFOObjectUDP(Config.LEADER_LISTEN_PORT); }
 		}
 		
 		for (int i = 1; i <= groupMap.size(); i++) {
 			groupMap.get(i).setIsLeader(false);					
 		}					
 		
-		udp.send(Config.FRONT_END_NAME, Config.FE_LISTEN_PORT, leaderId);		
+		udpSender.send(Config.FRONT_END_NAME, Config.FE_LISTEN_PORT, leaderId);		
 		
 		groupMap.get(leaderId).setIsLeader(true);
 	}
