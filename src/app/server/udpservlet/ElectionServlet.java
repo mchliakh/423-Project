@@ -37,7 +37,7 @@ public class ElectionServlet extends FIFOObjectUDPServlet<RetailStoreServerImpl>
 			electionPacket.setSenderId(getOwner().getId());
 			
 			getOwner().setElectionState(ElectionState.WAIT_FOR_REPLY);
-			//getOwner().broadcastHigherId(electionPacket);									
+			getOwner().broadcastHigherId(electionPacket);									
 		}
 		
 	}

@@ -604,13 +604,13 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		}
 	}
 		
-//	
-//	public void broadcastHigherId(BasicPacket req) {
-//		for (int i = id + 1; i != groupMap.size(); i++) {
-//			udp.FIFOSend(groupMap.get(i).getHost(), Config.ELECTION_IN_PORT, req, id);
-//		}
-//	}
-//
+	
+	public void broadcastHigherId(BasicPacket req) {
+		for (int i = id + 1; i != groupMap.size(); i++) {
+			udpSender.send(groupMap.get(i).getHost(), Config.ELECTION_RECEIVE_LISTEN_PORT, req);
+		}
+	}
+
 	public void setLeaderId(int leaderId) {
 		if (leaderId == id) {
 			isLeader = true;
