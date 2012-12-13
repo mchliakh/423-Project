@@ -7,6 +7,7 @@ import packet.CoordinatorPacket;
 import packet.ElectionPacket;
 import udp.FIFOObjectUDPServlet;
 import utils.LiteLogger;
+import app.server.Config;
 import app.server.RetailStoreServerImpl;
 
 public class ElectionReceiveServlet extends FIFOObjectUDPServlet<RetailStoreServerImpl> {
@@ -22,7 +23,7 @@ public class ElectionReceiveServlet extends FIFOObjectUDPServlet<RetailStoreServ
 	@Override
 	public void run() {		
 		while (true) {			
-			int timeout  = 1000;						
+			int timeout  = 10000;						
 			Object packet;
 			try {
 
@@ -54,7 +55,7 @@ public class ElectionReceiveServlet extends FIFOObjectUDPServlet<RetailStoreServ
 					coordinator.setLeaderId(getOwner().getId());
 					LiteLogger.log("New coordinator object created. Setting leader to ", getOwner().getId());
 					
-					//getOwner().broadcastAll(coordinator, Config.ELECTION_LISTEN_PORT);
+					getOwner().broadcastAll(coordinator, Config.ELECTION_LISTEN_PORT);
 					getOwner().setLeaderId(getOwner().getId());
 					getOwner().setElectionState(ElectionState.IDLE);
 				}
