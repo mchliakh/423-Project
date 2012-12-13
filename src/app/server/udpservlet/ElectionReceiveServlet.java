@@ -30,17 +30,21 @@ public class ElectionReceiveServlet extends FIFOObjectUDPServlet<RetailStoreServ
 //				getOwner().setElectionState(ElectionState.WAIT_FOR_REPLY); //TODO: to remove, for testing only
 				packet = receiveWithTimeout(timeout);
 				
+				LiteLogger.log("Election packet received");
 				if (packet instanceof ElectionPacket) {
 					ElectionPacket electionPacket = (ElectionPacket)packet;
+					LiteLogger.log("Election packet type = Election");
 					if (getOwner().getElectionState() == ElectionState.IDLE) {
 						AnswerPacket answerPacket = new AnswerPacket();
 						answerPacket.setElectionId(electionPacket.getId());
 					}
 				}
-				else if (packet instanceof AnswerPacket) { 
+				else if (packet instanceof AnswerPacket) {
+					LiteLogger.log("Election packet type = Answer");
 					getOwner().setElectionState(ElectionState.WAIT_FOR_LEADER);
 				}
-				else if (packet instanceof CoordinatorPacket) {					
+				else if (packet instanceof CoordinatorPacket) {	
+					LiteLogger.log("Election packet type = Coordinator");
 					getOwner().setElectionState(ElectionState.IDLE);
 					getOwner().setLeaderId( CoordinatorPacket.class.cast(packet).getLeaderId());
 				}
