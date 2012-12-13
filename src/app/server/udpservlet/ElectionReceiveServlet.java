@@ -48,6 +48,9 @@ public class ElectionReceiveServlet extends FIFOObjectUDPServlet<RetailStoreServ
 					getOwner().setElectionState(ElectionState.IDLE);
 					getOwner().setLeaderId( CoordinatorPacket.class.cast(packet).getLeaderId());
 				}
+				else {
+					LiteLogger.log("SOMETHING WENT WRONG, INVALID TYPE RECEIVED");
+				}
 				
 			} catch (SocketTimeoutException e) {
 				System.out.println(e.getMessage() + "\n" + e.getStackTrace());
