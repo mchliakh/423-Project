@@ -68,7 +68,7 @@ public class RetailStoreServerFE extends RetailStoreServer {
 				
 				LiteLogger.log("Waiting to receive new leader id...");
 				Object obj = udp.receive();
-								
+				LiteLogger.log("Received new leader id... obj = ", obj);							
 				MAX_ID = (Integer)obj;			
 			} //end while
 		} //end run
