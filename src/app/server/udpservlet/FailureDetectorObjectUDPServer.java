@@ -120,6 +120,8 @@ public class FailureDetectorObjectUDPServer extends FIFOObjectUDPServlet<RetailS
 		long end   =  System.currentTimeMillis();
 		
 		while (true) {
+			
+			LiteLogger.log("System leader id is = ", getOwner().getLeaderId());
 			end = System.currentTimeMillis();
 			
 			LiteLogger.log("In sendImAlive(). start=", start, "end=", end, " diff=", end - start);
