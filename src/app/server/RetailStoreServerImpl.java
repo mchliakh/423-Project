@@ -4,6 +4,9 @@ package app.server;
 import java.util.*;
 import java.io.*;
 
+import org.omg.CosNaming.NamingContextExt;
+import org.omg.CosNaming.NamingContextExtHelper;
+
 import packet.BasicPacket;
 import packet.StatusPacket;
 import udp.FIFOObjectUDP;
@@ -604,8 +607,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		
 		for (int i = 1; i <= groupMap.size(); i++) {
 			groupMap.get(i).setIsLeader(false);					
-		}	
-		MAX_ID = leaderId; //yaya whatever
+		}			
 		
 		groupMap.get(leaderId).setIsLeader(true);
 	}
