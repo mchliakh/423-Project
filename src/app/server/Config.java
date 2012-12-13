@@ -9,10 +9,10 @@ public class Config {
 	public static int IM_ALIVE_PORT = 4448; //Patch
 	public static int IM_ALIVE_PORT2 = IM_ALIVE_PORT + 1; //Patch
 	
-	public static String FRONT_END_NAME = "hoopa";
-	public static String SLAVE1_NAME = "haisla";
-	public static String SLAVE2_NAME = "hidatsa";
-	public static String LEADER_NAME = "hoopa";
+	public static String FRONT_END_NAME = "comanche";
+	public static String SLAVE1_NAME = "caddo";
+	public static String SLAVE2_NAME = "cherokee";
+	public static String LEADER_NAME = "comanche";
 
 //	public static String FRONT_END_NAME = "localhost";
 //	//public static String SLAVE1_NAME = "tewa";
