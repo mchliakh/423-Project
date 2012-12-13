@@ -4,6 +4,8 @@ public class Config {
 	public static int ELECTION_LISTEN_PORT 		   = 4450;
 	public static int ELECTION_RECEIVE_LISTEN_PORT = 4451;
 
+	public static int FE_LISTEN_PORT = 4480;
+	
 
 	public static int LEADER_LISTEN_PORT 	 = 4445;
 	public static int SLAVES_LISTEN_PORT 	 = 4446;

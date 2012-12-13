@@ -607,7 +607,9 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		
 		for (int i = 1; i <= groupMap.size(); i++) {
 			groupMap.get(i).setIsLeader(false);					
-		}			
+		}					
+		
+		udp.send(Config.FRONT_END_NAME, Config.FE_LISTEN_PORT, leaderId);		
 		
 		groupMap.get(leaderId).setIsLeader(true);
 	}
