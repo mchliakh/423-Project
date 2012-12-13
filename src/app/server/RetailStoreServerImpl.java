@@ -4,6 +4,9 @@ package app.server;
 import java.util.*;
 import java.io.*;
 
+import org.omg.CosNaming.NamingContextExt;
+import org.omg.CosNaming.NamingContextExtHelper;
+
 import packet.BasicPacket;
 import packet.StatusPacket;
 import udp.FIFOObjectUDP;
@@ -30,6 +33,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 	private HashMap<Integer, GroupMember> groupMap = new HashMap<Integer, GroupMember>();
 	
 	private FIFOObjectUDP udp;
+	private FIFOObjectUDP udpReElectedLeader; //patch patch patch
 	private ObjectUDP udpSender;
 	private FIFOObjectUDP udpFIFOSender;
 	
@@ -74,6 +78,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 	
 	private Thread dispatchServer;
 	private Thread failureDetectionServer;
+	private Thread electionReceiveServer;
 	
 	private int id;
 	private int counter = 1;
@@ -110,7 +115,7 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		}
 		
 		// build group map
-		//groupMap.put(1, new GroupMember(Config.SLAVE1_NAME));
+		groupMap.put(1, new GroupMember(Config.SLAVE1_NAME));
 		groupMap.put(2, new GroupMember(Config.SLAVE2_NAME));
 		groupMap.put(3, new GroupMember(Config.LEADER_NAME, true));
 		
@@ -122,23 +127,34 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 			udpFIFOSender  = new FIFOObjectUDP(Config.SLAVES_UDP_SENDER_PORT + 10);
 			dispatchServer.start();
 			
-			FailureDetectorObjectUDPServer fd = new FailureDetectorObjectUDPServer(Config.IM_ALIVE_PORT, this);
-			fd.addServer(2);
-			fd.addServer(3);
-			failureDetectionServer = new Thread(fd);
-			failureDetectionServer.start();
+//			FailureDetectorObjectUDPServer fd = new FailureDetectorObjectUDPServer(Config.IM_ALIVE_PORT, this);
+//			fd.addServer(1);
+//			fd.addServer(2);
+//			fd.addServer(3);
+//			failureDetectionServer = new Thread(fd);
+//			failureDetectionServer.start();
 		} else {
 			LiteLogger.log("Creating Leader for id", id);
 			udp = new FIFOObjectUDP(Config.LEADER_LISTEN_PORT);
 			udpFIFOSender  = new FIFOObjectUDP(Config.SLAVES_UDP_SENDER_PORT + 11);
 			
-			FailureDetectorObjectUDPServer fd = new FailureDetectorObjectUDPServer(Config.IM_ALIVE_PORT2, this);
-			fd.addServer(2);
-			fd.addServer(3);
-			failureDetectionServer = new Thread(fd);
-			failureDetectionServer.start();
+//			FailureDetectorObjectUDPServer fd = new FailureDetectorObjectUDPServer(Config.IM_ALIVE_PORT, this);
+//			fd.addServer(1);
+//			fd.addServer(2);
+//			fd.addServer(3);
+//			failureDetectionServer = new Thread(fd);
+//			failureDetectionServer.start();
 		}
 		
+		FailureDetectorObjectUDPServer fd = new FailureDetectorObjectUDPServer(Config.IM_ALIVE_PORT, this);
+		fd.addServer(1);
+		fd.addServer(2);
+		fd.addServer(3);
+		failureDetectionServer = new Thread(fd);
+		failureDetectionServer.start();
+		
+		electionReceiveServer = new Thread(new ElectionReceiveServlet(Config.ELECTION_RECEIVE_LISTEN_PORT, this));
+		electionReceiveServer.start();
 		 // seed inventory with random stock
 //		 Random generator = new Random();
 //		 for (int i = 0; i < INVENTORY_SIZE; i++) {
@@ -167,7 +183,12 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		Object resp = null;
 		while (responseId != counter-1) {
 			LiteLogger.log("\nLeader is waiting to receive answer ...\n");
-			resp = udp.receive();
+			if (udp != null) {
+				resp = udp.receive();
+			}
+			else {
+				resp = udpReElectedLeader.receive();
+			}
 			LiteLogger.log("\nThe almighty has received an answer ...\n");
 			responseId = ((Response) resp).getId();
 		}
@@ -507,30 +528,41 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 		return id == MAX_ID;
 	}
 	
-	private int getLeaderId() {
-		// TODO!!!
-		return MAX_ID;
+	public int getLeaderId() {
+		for (int i = 1; i <= groupMap.size(); i++) {
+			if (groupMap.containsKey(i)) {
+				if (groupMap.get(i).isLeader) { return i; }				
+			}
+		}
+		
+		return -1; //somethign went terrible wrong
 	}
 	
 	public int getId() { return id; }
 	public boolean getLeader() { return isLeader; }
 	public  HashMap<Integer, GroupMember> getGroupMap() { return groupMap; }
 	
-//	public ElectionState getElectionState() {
-//		return electionState;
-//	}
-//
-//	public void setElectionState(ElectionState electionState) {
-//		this.electionState = electionState;
-//	}
-//	
+	public ElectionState getElectionState() {
+		return electionState;
+	}
+
+	public void setElectionState(ElectionState electionState) {
+		LiteLogger.log("Setting election state to:", electionState);
+		this.electionState = electionState;
+	}
+	
 	public void broadcast(BasicPacket req) {
 		//System.out.println("Attemping to broadcast " + ((StatusPacket) req).getStatus());
 		LiteLogger.log("Attempting to broadcast...");
 		for (GroupMember member : groupMap.values()) {
 			if (!member.isLeader() && member.isAlive()) {
 				LiteLogger.log(member.getHost(), Config.SLAVES_LISTEN_PORT, req.getId(), id);
-				udp.FIFOSend(member.getHost(), Config.SLAVES_LISTEN_PORT, req, req.getId(), id);
+				if (udp != null) {
+					udp.FIFOSend(member.getHost(), Config.SLAVES_LISTEN_PORT, req, req.getId(), id);
+				}
+				else {
+					udpReElectedLeader.FIFOSend(member.getHost(), Config.SLAVES_LISTEN_PORT, req, req.getId(), id);
+				}
 				
 			}
 		}
@@ -547,6 +579,31 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 			}
 		}
 	}
+	
+	public void broadcastAll(BasicPacket req, int port) {
+		//System.out.println("Attemping to broadcast " + ((StatusPacket) req).getStatus());
+		LiteLogger.log("Attempting to broadcast...");
+		for (GroupMember member : groupMap.values()) {
+			if (member.isAlive()) {
+				LiteLogger.log(member.getHost(), port, req.getId(), id);
+				udpFIFOSender.FIFOSend(member.getHost(), port, req, req.getId(), id);
+				
+			}
+		}
+	}
+	
+	public void broadcastAllNonFifo(BasicPacket req, int port) {
+		//System.out.println("Attemping to broadcast " + ((StatusPacket) req).getStatus());
+		LiteLogger.log("Attempting to broadcast...");
+		for (GroupMember member : groupMap.values()) {
+			if (member.isAlive()) {
+				LiteLogger.log(member.getHost(), port, req);
+				udpSender.send(member.getHost(), port, req);
+				
+			}
+		}
+	}
+		
 //	
 //	public void broadcastHigherId(BasicPacket req) {
 //		for (int i = id + 1; i != groupMap.size(); i++) {
@@ -554,15 +611,18 @@ public class RetailStoreServerImpl extends RetailStoreServer {
 //		}
 //	}
 //
-//	public void setLeaderId(int leaderId) {
-//		if (leaderId == id) {
-//			isLeader = true;
-//		}
-//		
-//		for (int i = 1; i <= groupMap.size(); i++) {
-//			groupMap.get(i).setIsLeader(false);					
-//		}	
-//		
-//		groupMap.get(leaderId).setIsLeader(true);
-//	}
+	public void setLeaderId(int leaderId) {
+		if (leaderId == id) {
+			isLeader = true;
+			if (udpReElectedLeader == null ) { udpReElectedLeader = new FIFOObjectUDP(Config.LEADER_LISTEN_PORT); }
+		}
+		
+		for (int i = 1; i <= groupMap.size(); i++) {
+			groupMap.get(i).setIsLeader(false);					
+		}					
+		
+		udpSender.send(Config.FRONT_END_NAME, Config.FE_LISTEN_PORT, leaderId);		
+		
+		groupMap.get(leaderId).setIsLeader(true);
+	}
 }

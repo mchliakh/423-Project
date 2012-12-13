@@ -1,8 +1,15 @@
 package app.server.udpservlet;
 
+import java.util.Properties;
+
+import org.omg.CosNaming.NamingContextExt;
+import org.omg.CosNaming.NamingContextExtHelper;
+
 import packet.CoordinatorPacket;
 import packet.ElectionPacket;
 import udp.FIFOObjectUDPServlet;
+import utils.LiteLogger;
+import app.server.Config;
 import app.server.RetailStoreServerImpl;
 
 public class ElectionServlet extends FIFOObjectUDPServlet<RetailStoreServerImpl> {
@@ -13,21 +20,24 @@ public class ElectionServlet extends FIFOObjectUDPServlet<RetailStoreServerImpl>
 	}
 
 	@Override
-	public void run() {						
-		if (getOwner().getId() >= getOwner().getGroupMap().size()) {
+	public void run() {		
+		LiteLogger.log("Starting ElectionServlet...");
+		if (getOwner().getId() >= getOwner().getLeaderId() - 1) {
+			LiteLogger.log("id = ",getOwner().getId(), " is the new leader by default");	
 			CoordinatorPacket coordinator = new CoordinatorPacket();
 			coordinator.setLeaderId(getOwner().getId());
-			getOwner().broadcast(coordinator);
-			getOwner().setLeaderId(getOwner().getId());
+			getOwner().broadcastAllNonFifo(coordinator, Config.ELECTION_RECEIVE_LISTEN_PORT);
+			getOwner().setLeaderId(getOwner().getId());				
 		}
 		else {
+			LiteLogger.log("id = ",getOwner().getId(), " is NOT the new leader. Broadcasting to higher ids");	
 			ElectionPacket electionPacket = new ElectionPacket();
 			electionId += 1;
 			electionPacket.setId(electionId);
 			electionPacket.setSenderId(getOwner().getId());
 			
 			getOwner().setElectionState(ElectionState.WAIT_FOR_REPLY);
-			getOwner().broadcastHigherId(electionPacket);									
+			//getOwner().broadcastHigherId(electionPacket);									
 		}
 		
 	}

@@ -1,13 +1,20 @@
 package app.server;
 
+
+import udp.ObjectUDP;
+import utils.LiteLogger;
 import app.orb.RetailStorePackage.InsufficientQuantity;
 import app.orb.RetailStorePackage.InvalidReturn;
 import app.orb.RetailStorePackage.NoSuchItem;
+
 
 public class RetailStoreServerFE extends RetailStoreServer {
 	
 	public RetailStoreServerFE(String storeCode) {
 		super(storeCode);
+		
+		Thread receiveThread = new Thread(new ReceiveThread());
+		receiveThread.start();
 	}
 
 	@Override
@@ -40,4 +47,31 @@ public class RetailStoreServerFE extends RetailStoreServer {
 		System.out.println("Received \"exchange\", forwarding to leader.");
 		getORBInterface(getStoreCode() + MAX_ID).exchange(customerID, boughtItemID, boughtNumber, desiredItemID, desiredNumber);
 	}
+	
+	
+	//-----------------------------------------------------------------------------
+	private class ReceiveThread implements Runnable {
+		Thread runner;
+		ObjectUDP udp;
+		public ReceiveThread() {
+			udp = new ObjectUDP(Config.FE_LISTEN_PORT);
+		}
+
+		public void run() {
+			while (true) {
+				try {
+					Thread.sleep(3000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				LiteLogger.log("Waiting to receive new leader id...");
+				Object obj = udp.receive();
+				LiteLogger.log("Received new leader id... obj = ", obj);							
+				MAX_ID = (Integer)obj;			
+			} //end while
+		} //end run
+	}
+
 }
